@@ -7,6 +7,9 @@ from typing import List, Tuple
 
 class Mesh:
 
+    ids = [[]]
+    matrix = [[]]
+
     def __init__(self, n_dots_x: int, n_dots_y: int, spacing: float):
         self.n_dots_x = n_dots_x
         self.n_dots_y = n_dots_y
@@ -22,6 +25,10 @@ class Mesh:
     def print_matrix(self):
         for i in range(len(self.matrix)-1, -1, -1):
             print(self.matrix[i])
+
+    def print_matrix_nodeIds(self):
+        for i in range(len(self.ids)-1, -1, -1):
+            print(self.ids[i])
 
     def get_neighbour_by_distance(self, index_x: int, index_y: int, distance_threshold: float) -> List:
         neighbours = []
@@ -90,7 +97,8 @@ def main():
     script_builder = ScriptBuilder.ScriptBuilder(mesh)
 
     script_builder.write_tcl_create_nodes()
-    script_builder.write_tcl_create_rods(neighbour_distance_threshold, spacing)
+    script_builder.write_tcl_create_rods_optimization(
+        neighbour_distance_threshold, spacing)
     spc_node_ids = [mesh.ids[y][x] for y, x in zip([8, 8], [0, length])]
     script_builder.write_tcl_spc(spc_node_ids, [0, 0, 0, 0, 0, -999999])
     load_node_id = [mesh.ids[y][x] for y, x in zip([8], [8])]
