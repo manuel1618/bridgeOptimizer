@@ -25,7 +25,10 @@ class ScriptBuilder:
                     self.mesh.ids[y][x] = id
                     id += 1
 
-    def write_tcl_create_rods(self, neighbour_distance_threshold: float, shortest_beam_length: float):
+    def write_tcl_create_rods_optimization(self, neighbour_distance_threshold: float, shortest_beam_length: float):
+
+        property_name_optimization = "property1"
+
         self.tcl_commands.append("*elementtype 61 1")
         self.tcl_commands.append(
             "*createentity mats cardimage=MAT1 includeid=0 name=\"material1\"")
@@ -34,7 +37,7 @@ class ScriptBuilder:
         self.tcl_commands.append("*setvalue mats id=1 STATUS=1 3=0.3")
         self.tcl_commands.append("*setvalue mats id=1 STATUS=1 4=7.85e-09")
         self.tcl_commands.append(
-            "*createentity props cardimage=PROD includeid=0 name=\"property1\"")
+            f"*createentity props cardimage=PROD includeid=0 name=\"{property_name_optimization}\"")
         self.tcl_commands.append(
             "*createentity beamsectcols includeid=0 name=\"beamsectcol1\"")
         self.tcl_commands.append(
@@ -46,7 +49,8 @@ class ScriptBuilder:
         self.tcl_commands.append("*setvalue props id=1 materialid={mats 1}")
         self.tcl_commands.append(
             "*setvalue props id=1 STATUS=2 3179={beamsects 1}")
-        self.tcl_commands.append("*createmark properties 1 \"property1\"")
+        self.tcl_commands.append(
+            f"*createmark properties 1 \"{property_name_optimization}\"")
         self.tcl_commands.append("*syncpropertybeamsectionvalues 1")
         self.tcl_commands.append("*mergehistorystate \"\" \"\"")
         linksAlreadyDrawn = []
@@ -59,7 +63,7 @@ class ScriptBuilder:
                     for neighbourId in neighbours:
                         if (id, neighbourId) not in linksAlreadyDrawn and (neighbourId, id) not in linksAlreadyDrawn:
                             self.tcl_commands.append(
-                                f"*rod {id} {neighbourId} \"property1\"")
+                                f"*rod {id} {neighbourId} \"{property_name_optimization}\"")
                             linksAlreadyDrawn.append((id, neighbourId))
 
     """
@@ -70,7 +74,6 @@ class ScriptBuilder:
     """
 
     def write_tcl_spc(self, nodeIDs: List, dofs: List):
-
         # TODO: Add some chekc if the load collecor has been created
         self.tcl_commands.append(
             "*createentity loadcols includeid=0 name=\"spc\"")
