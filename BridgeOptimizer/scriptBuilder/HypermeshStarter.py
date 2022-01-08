@@ -3,6 +3,9 @@ import os
 
 
 class HypermeshStarter:
+    """
+    Hypermesh Starter Class (Windows only currently)
+    """
 
     ALTAIR_HOME = os.environ["ProgramFiles"]+"\\Altair\\2021.2"
     PATH_HYPERMESH = ALTAIR_HOME+"\\hwdesktop\\hm\\bin\\win64\\hmopengl.exe"
