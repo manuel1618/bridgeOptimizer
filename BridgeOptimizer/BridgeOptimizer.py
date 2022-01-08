@@ -1,11 +1,19 @@
 import math
-import os
-from HypermeshStarter import HypermeshStarter
-import ScriptBuilder
 from typing import List, Tuple
 
+import BridgeOptimizer.scriptBuilder.ScriptBuilderBoundaryConditions as ScriptBuilderBoundaryConditions
+import BridgeOptimizer.scriptBuilder.ScriptBuilder as ScriptBuilder
+from BridgeOptimizer.datastructure.hypermesh.SPC import SPC
+from BridgeOptimizer.datastructure.hypermesh.Force import Force
+from BridgeOptimizer.datastructure.hypermesh.LoadCollector import LoadCollector
+from BridgeOptimizer.datastructure.hypermesh.LoadStep import LoadStep
 
-class Mesh:
+
+class BridgeOptimizer:
+    """
+    Main class of the Bridge Optimizer, used to be called Mesh    
+
+    """
 
     ids = [[]]
     matrix = [[]]
@@ -87,23 +95,35 @@ def main():
     length = 16
     height = 16
     spacing = 1.25
-    neighbour_distance_threshold = 3*spacing  # this is the max length of the beam
-    mesh = Mesh(length, height, spacing)
+    neighbour_distance_threshold = 1.5*spacing  # this is the max length of the beam
+    bridge_optimizer = BridgeOptimizer(length, height, spacing)
 
-    # mesh.blackout_zone(0,10,0,10)
-    # mesh.blackout_zone(-10,0,0,10)
+    # bridge_optimizer.blackout_zone(0,10,0,10)
+    # bridge_optimizer.blackout_zone(-10,0,0,10)
 
     # Build script
-    script_builder = ScriptBuilder.ScriptBuilder(mesh)
+    script_builder = ScriptBuilder.ScriptBuilder(bridge_optimizer)
 
     script_builder.write_tcl_create_nodes()
     script_builder.write_tcl_create_rods_optimization(
         neighbour_distance_threshold, spacing)
-    spc_node_ids = [mesh.ids[y][x] for y, x in zip([8, 8], [0, length])]
-    script_builder.write_tcl_spc(spc_node_ids, [0, 0, 0, 0, 0, -999999])
-    load_node_id = [mesh.ids[y][x] for y, x in zip([8], [8])]
-    script_builder.write_tcl_load(load_node_id, (0, -spacing, 0))
-    script_builder.write_tcl_loadstep()
+
+    # Boundary Conditions
+    spc_node_ids = [bridge_optimizer.ids[y][x]
+                    for y, x in zip([8, 8], [0, length])]
+    spc_loadCollector = LoadCollector()
+    SPC(spc_loadCollector, spc_node_ids, [0, 0, 0, 0, 0, -999999])
+
+    # Loads
+    load_node_id = [bridge_optimizer.ids[y][x] for y, x in zip([8], [8])]
+    load_loadCollector = LoadCollector()
+    Force(load_loadCollector, load_node_id, 0, -spacing, 0)
+    # Loadstep
+    LoadStep(spc_loadCollector, load_loadCollector)
+    script_builder_bc = ScriptBuilderBoundaryConditions.ScriptBuilderBoundaryConditions()
+    script_builder_bc.write_tcl_commands_loadsteps(script_builder.tcl_commands)
+
+    # TopOpt
     script_builder.write_tcl_basic_topOpt_minMass(load_node_id, 0.3*spacing)
     script_builder.write_script_and_run()
 

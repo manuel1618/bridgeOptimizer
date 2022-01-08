@@ -1,28 +1,29 @@
 import os
 from typing import List, Tuple
 
-from HypermeshStarter import HypermeshStarter
-import Mesh
+from BridgeOptimizer.BridgeOptimizer import BridgeOptimizer
+
+
+from .HypermeshStarter import HypermeshStarter
 
 
 class ScriptBuilder:
     tcl_commands = []
-    mesh: Mesh
 
-    def __init__(self, mesh: Mesh):
+    def __init__(self, bridgeOptimizer: BridgeOptimizer):
         self.tcl_commands = HypermeshStarter.initialize_tcl_commands()
-        self.mesh = mesh
+        self.bridgeOptimizer = bridgeOptimizer
 
     def write_tcl_create_nodes(self):
-        self.mesh.ids = [[0 for x in range(len(self.mesh.matrix[0]))]
-                         for y in range(len(self.mesh.matrix))]
+        self.bridgeOptimizer.ids = [[0 for x in range(len(self.bridgeOptimizer.matrix[0]))]
+                                    for y in range(len(self.bridgeOptimizer.matrix))]
         id = 1
-        for x in range(len(self.mesh.matrix[0])):
-            for y in range(len(self.mesh.matrix)):
-                if self.mesh.matrix[y][x] == 1:
+        for x in range(len(self.bridgeOptimizer.matrix[0])):
+            for y in range(len(self.bridgeOptimizer.matrix)):
+                if self.bridgeOptimizer.matrix[y][x] == 1:
                     self.tcl_commands.append(
-                        f"*createnode {x*self.mesh.spacing} {y*self.mesh.spacing} 0 0 0 0")
-                    self.mesh.ids[y][x] = id
+                        f"*createnode {x*self.bridgeOptimizer.spacing} {y*self.bridgeOptimizer.spacing} 0 0 0 0")
+                    self.bridgeOptimizer.ids[y][x] = id
                     id += 1
 
     def write_tcl_create_rods_optimization(self, neighbour_distance_threshold: float, shortest_beam_length: float):
@@ -54,73 +55,17 @@ class ScriptBuilder:
         self.tcl_commands.append("*syncpropertybeamsectionvalues 1")
         self.tcl_commands.append("*mergehistorystate \"\" \"\"")
         linksAlreadyDrawn = []
-        for x in range(len(self.mesh.matrix[0])):
-            for y in range(len(self.mesh.matrix)):
-                if self.mesh.matrix[y][x] == 1:
-                    id = self.mesh.ids[y][x]
-                    neighbours = self.mesh.get_neighbour_by_distance(
+        for x in range(len(self.bridgeOptimizer.matrix[0])):
+            for y in range(len(self.bridgeOptimizer.matrix)):
+                if self.bridgeOptimizer.matrix[y][x] == 1:
+                    id = self.bridgeOptimizer.ids[y][x]
+                    neighbours = self.bridgeOptimizer.get_neighbour_by_distance(
                         x, y, neighbour_distance_threshold)
                     for neighbourId in neighbours:
                         if (id, neighbourId) not in linksAlreadyDrawn and (neighbourId, id) not in linksAlreadyDrawn:
                             self.tcl_commands.append(
                                 f"*rod {id} {neighbourId} \"{property_name_optimization}\"")
                             linksAlreadyDrawn.append((id, neighbourId))
-
-    """
-
-    Parameters:
-    - dofs: List of values for the DOFs of the spcs to create. -999999 is a free contraint
-
-    """
-
-    def write_tcl_spc(self, nodeIDs: List, dofs: List):
-        # TODO: Add some chekc if the load collecor has been created
-        self.tcl_commands.append(
-            "*createentity loadcols includeid=0 name=\"spc\"")
-        for nodeID in nodeIDs:
-            self.tcl_commands.append(f"*createmark nodes 1 {nodeID}")
-            self.tcl_commands.append(
-                f"*loadcreateonentity_curve nodes 1 3 1 {dofs[0]} {dofs[1]} {dofs[2]} {dofs[3]} {dofs[4]} {dofs[5]} 0 0 0 0 0")
-            self.tcl_commands.append("*createmark loads 0 1")
-            self.tcl_commands.append("*loadsupdatefixedvalue 0 0")
-        pass
-
-    def write_tcl_load(self, nodeIDs: List, force: Tuple):
-        # TODO: Add some chekc if the load collecor has been created
-        self.tcl_commands.append(
-            "*createentity loadcols includeid=0 name=\"loads\"")
-        for nodeID in nodeIDs:
-            self.tcl_commands.append(f"*createmark nodes 1 {nodeID}")
-            self.tcl_commands.append(
-                f"*loadcreateonentity_curve nodes 1 1 1 {force[0]} {force[1]} {force[2]} 0 {force[0]} {force[1]} {force[2]} 0 0 0 0")
-        pass
-
-    def write_tcl_loadstep(self):
-        self.tcl_commands.append("*createmark loadcols 1 \"spc\" \"loads\"")
-        self.tcl_commands.append("*createmark outputblocks 1")
-        self.tcl_commands.append("*createmark groups 1")
-        self.tcl_commands.append("*loadstepscreate \"ls1\" 1")
-        self.tcl_commands.append(
-            "*attributeupdateint loadsteps 1 4143 1 1 0 1")
-        self.tcl_commands.append(
-            "*attributeupdateint loadsteps 1 4709 1 1 0 1")
-        self.tcl_commands.append(
-            "*setvalue loadsteps id=1 STATUS=2 4059=1 4060=STATICS")
-        self.tcl_commands.append(
-            "*attributeupdateentity loadsteps 1 4145 1 1 0 loadcols 1")
-        self.tcl_commands.append(
-            "*attributeupdateentity loadsteps 1 4147 1 1 0 loadcols 2")
-        self.tcl_commands.append(
-            "*attributeupdateint loadsteps 1 3800 1 1 0 0")
-        self.tcl_commands.append("*attributeupdateint loadsteps 1 707 1 1 0 0")
-        self.tcl_commands.append(
-            "*attributeupdateint loadsteps 1 2396 1 1 0 0")
-        self.tcl_commands.append(
-            "*attributeupdateint loadsteps 1 8134 1 1 0 0")
-        self.tcl_commands.append(
-            "*attributeupdateint loadsteps 1 2160 1 1 0 0")
-        self.tcl_commands.append(
-            "*attributeupdateint loadsteps 1 10212 1 1 0 0")
 
     def write_tcl_basic_topOpt_minMass(self, node_ids_deflection: List, max_deflection: float):
         self.tcl_commands.append("*createmark properties 1 \"property1\"")
@@ -199,15 +144,3 @@ class ScriptBuilder:
                 tcl_file.write("%s\n" % line)
         hypermeshStarter = HypermeshStarter()
         hypermeshStarter.runHyperMesh(pathScript)
-
-
-# def main():
-#     script_builder = ScriptBuilder()
-#     script_builder.write_tcl_load([1, 2], (1, 2, 3))
-
-#     for line in script_builder.tcl_commands:
-#         print(line)
-
-
-# if __name__ == "__main__":
-#     main()
