@@ -7,6 +7,15 @@ from BridgeOptimizer.datastructure.hypermesh.SPC import SPC
 
 
 class ScriptBuilderBoundaryConditions:
+    """
+    Extra class for generating Loadstep, Loadcollectors, Forces and Constraints
+
+    Parameters: 
+    ---------
+    None
+
+
+    """
 
     def __init__(self) -> None:
         pass
