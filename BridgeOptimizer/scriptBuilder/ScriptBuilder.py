@@ -1,7 +1,8 @@
 import os
 from typing import List, Tuple
 
-from BridgeOptimizer.BridgeOptimizer import BridgeOptimizer
+from BridgeOptimizer.datastructure.Grid import Grid
+from BridgeOptimizer.datastructure.hypermesh.Rod import Rod
 
 
 from .HypermeshStarter import HypermeshStarter
@@ -10,72 +11,94 @@ from .HypermeshStarter import HypermeshStarter
 class ScriptBuilder:
     tcl_commands = []
 
-    def __init__(self, bridgeOptimizer: BridgeOptimizer):
+    def __init__(self, grid: Grid):
         self.tcl_commands = HypermeshStarter.initialize_tcl_commands()
-        self.bridgeOptimizer = bridgeOptimizer
+        self.grid = grid
 
     def write_tcl_create_nodes(self):
-        self.bridgeOptimizer.ids = [[0 for x in range(len(self.bridgeOptimizer.matrix[0]))]
-                                    for y in range(len(self.bridgeOptimizer.matrix))]
+        self.grid.ids = [[0 for x in range(len(self.grid.matrix[0]))]
+                         for y in range(len(self.grid.matrix))]
         id = 1
-        for x in range(len(self.bridgeOptimizer.matrix[0])):
-            for y in range(len(self.bridgeOptimizer.matrix)):
-                if self.bridgeOptimizer.matrix[y][x] == 1:
+        for x in range(len(self.grid.matrix[0])):
+            for y in range(len(self.grid.matrix)):
+                if self.grid.matrix[y][x] == 1:
                     self.tcl_commands.append(
-                        f"*createnode {x*self.bridgeOptimizer.spacing} {y*self.bridgeOptimizer.spacing} 0 0 0 0")
-                    self.bridgeOptimizer.ids[y][x] = id
+                        f"*createnode {x*self.grid.spacing} {y*self.grid.spacing} 0 0 0 0")
+                    self.grid.ids[y][x] = id
                     id += 1
 
-    def write_tcl_create_rods_optimization(self, neighbour_distance_threshold: float, shortest_beam_length: float):
+    def write_tcl_create_rods(self):
+        rod_id: int = 1
+        rod: Rod = None
 
-        property_name_optimization = "property1"
+        # non optimization - every rod has its comp prop etc
+        optimization_id = 0
+        for rod in Rod.instances:
 
-        self.tcl_commands.append("*elementtype 61 1")
-        self.tcl_commands.append(
-            "*createentity mats cardimage=MAT1 includeid=0 name=\"material1\"")
-        self.tcl_commands.append("*clearmark materials 1")
-        self.tcl_commands.append("*setvalue mats id=1 STATUS=1 1=210000")
-        self.tcl_commands.append("*setvalue mats id=1 STATUS=1 3=0.3")
-        self.tcl_commands.append("*setvalue mats id=1 STATUS=1 4=7.85e-09")
-        self.tcl_commands.append(
-            f"*createentity props cardimage=PROD includeid=0 name=\"{property_name_optimization}\"")
-        self.tcl_commands.append(
-            "*createentity beamsectcols includeid=0 name=\"beamsectcol1\"")
-        self.tcl_commands.append(
-            "*createentity beamsects includeid=0 name=\"beamsection1\"")
-        self.tcl_commands.append(
-            f"*setvalue beamsects id=1 beamsect_dim1={0.2*shortest_beam_length}")
-        self.tcl_commands.append("*clearmark beamsects 1")
-        self.tcl_commands.append("*setvalue beamsects id=1 config=2")
-        self.tcl_commands.append("*setvalue props id=1 materialid={mats 1}")
-        self.tcl_commands.append(
-            "*setvalue props id=1 STATUS=2 3179={beamsects 1}")
-        self.tcl_commands.append(
-            f"*createmark properties 1 \"{property_name_optimization}\"")
-        self.tcl_commands.append("*syncpropertybeamsectionvalues 1")
-        self.tcl_commands.append("*mergehistorystate \"\" \"\"")
-        linksAlreadyDrawn = []
-        for x in range(len(self.bridgeOptimizer.matrix[0])):
-            for y in range(len(self.bridgeOptimizer.matrix)):
-                if self.bridgeOptimizer.matrix[y][x] == 1:
-                    id = self.bridgeOptimizer.ids[y][x]
-                    neighbours = self.bridgeOptimizer.get_neighbour_by_distance(
-                        x, y, neighbour_distance_threshold)
-                    for neighbourId in neighbours:
-                        if (id, neighbourId) not in linksAlreadyDrawn and (neighbourId, id) not in linksAlreadyDrawn:
-                            self.tcl_commands.append(
-                                f"*rod {id} {neighbourId} \"{property_name_optimization}\"")
-                            linksAlreadyDrawn.append((id, neighbourId))
+            if optimization_id == 0 or not rod.optimization:
+                mat = rod.material
+                self.tcl_commands.append("*elementtype 61 1")
+                self.tcl_commands.append(
+                    f"*createentity mats cardimage=MAT1 includeid=0 name=\"material_{rod_id}\"")
+                self.tcl_commands.append("*clearmark materials 1")
+                self.tcl_commands.append(
+                    f"*setvalue mats id={rod_id} STATUS=1 1={mat.yngs_mdl}")
+                self.tcl_commands.append(
+                    f"*setvalue mats id={rod_id} STATUS=1 3={mat.poisson_ratio}")
+                self.tcl_commands.append(
+                    f"*setvalue mats id={rod_id} STATUS=1 4={mat.density}")
+                self.tcl_commands.append(
+                    f"*createentity props cardimage=PROD includeid=0 name=\"property_{rod_id}\"")
+                self.tcl_commands.append(
+                    f"*createentity beamsectcols includeid=0 name=\"beamsectcol_{rod_id}\"")
+                self.tcl_commands.append(
+                    f"*createentity beamsects includeid=0 name=\"beamsection_{rod_id}\"")
+                self.tcl_commands.append(
+                    f"*setvalue beamsects id=1 beamsect_dim1={rod.diameter}")
+                self.tcl_commands.append("*clearmark beamsects 1")
+                self.tcl_commands.append(
+                    f"*setvalue beamsects id={rod_id} config=2")
+                self.tcl_commands.append(
+                    f"*setvalue props id={rod_id} materialid={{mats {rod_id}}}")
+                self.tcl_commands.append(
+                    f"*setvalue props id={rod_id} STATUS=2 3179={{beamsects {rod_id}}}")
+                self.tcl_commands.append(
+                    f"*createmark properties 1 \"property_{rod_id}\"")
+                self.tcl_commands.append("*syncpropertybeamsectionvalues 1")
+                self.tcl_commands.append("*mergehistorystate \"\" \"\"")
+
+            # optimization - only 1 property
+            if rod.optimization and optimization_id == 0:
+                optimization_id = rod_id
+
+            if rod.optimization:
+                id = optimization_id
+            else:
+                id = rod_id
+            rod.id = id
+            self.tcl_commands.append(
+                f"*rod {rod.node_ids[0]} {rod.node_ids[1]} \"property_{id}\"")
+            rod_id += 1
 
     def write_tcl_basic_topOpt_minMass(self, node_ids_deflection: List, max_deflection: float):
-        self.tcl_commands.append("*createmark properties 1 \"property1\"")
-        self.tcl_commands.append("*topologydesvarcreate 1 \"topOpt\" 0 0 5")
+        """
+        Standard Method for min Mass Problems in Optistruct - is dependant on the ROD implementation
+        """
+        optimization_id = 0
+        for rod in Rod.instances:
+            if rod.optimization:
+                optimization_id = rod.id
+
+        self.tcl_commands.append(
+            f"*createmark properties 1 property_{optimization_id}")
+        self.tcl_commands.append("*topologydesvarcreate 1 \"topOpt\" f0 0 5")
         self.tcl_commands.append("*createarray 6 0 0 0 0 0 0")
         self.tcl_commands.append("*createdoublearray 6 0 0 0 0 0 0")
-        self.tcl_commands.append("*createarray 7 1 0 0 0 0 0 0")
+        self.tcl_commands.append(
+            f"*createarray 7 {optimization_id} 0 0 0 0 0 0")
         self.tcl_commands.append("*createdoublearray 6 0 0 0 0 0 0")
         self.tcl_commands.append(
-            "*optiresponsecreate \"mass\" 29 8 0 0 0 1 6 0 0 0 1 7 1 6")
+            f"*optiresponsecreate \"mass\" 29 8 0 0 0 1 6 0 0 0 1 7 1 6")
         self.tcl_commands.append(
             "*optiresponsesetequationdata1 \"mass\" 0 0 0 0 1 0")
         self.tcl_commands.append(
@@ -107,7 +130,12 @@ class ScriptBuilder:
         self.tcl_commands.append("*optiobjectivecreate 1 0 0")
 
     def write_tcl_basic_topOpt_minCompliance(self, max_volumr_frac: float):
-        self.tcl_commands.append("*createmark properties 1 \"property1\"")
+        property_names = ""
+        for rod in Rod.instances:
+            if rod.optimization:
+                property_names += f"\"property_{rod.id}\" "
+
+        self.tcl_commands.append(f"*createmark properties 1 {property_names}")
         self.tcl_commands.append("*topologydesvarcreate 1 \"topOpt\" 0 0 5")
         self.tcl_commands.append("*createarray 6 0 0 0 0 0 0")
         self.tcl_commands.append("*createdoublearray 6 0 0 0 0 0 0")
@@ -143,4 +171,4 @@ class ScriptBuilder:
             for line in self.tcl_commands:
                 tcl_file.write("%s\n" % line)
         hypermeshStarter = HypermeshStarter()
-        hypermeshStarter.runHyperMesh(pathScript)
+        # hypermeshStarter.runHyperMesh(pathScript)
