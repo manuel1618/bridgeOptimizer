@@ -9,7 +9,7 @@ class LoadCollector:
         return LoadCollector.instances.index(self)+1
 
     """
-    Load collecotr can contain Forces or SPCs currently - this method finds out what this collector contains
+    Load collector can contain Forces or SPCs currently - this method finds out what this collector contains
     """
 
     def get_load_collector_type(self):

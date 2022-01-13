@@ -15,15 +15,19 @@ from BridgeOptimizer.datastructure.Grid import Grid
 
 class BridgeOptimizer:
     """
-    Main class of the Bridge Optimizer, used to be called Mesh    
+    Main class of the Bridge Optimizer, used to be called Mesh
 
     """
 
 
 def main():
-    length = 4
-    height = 4
+    length = 8
+    height = 8
     spacing = 1.25
+
+    driving_lane_height = int(height / 2)
+    load_x_coord = int(length/2)
+    load_sum = -5*spacing
     neighbour_distance_threshold = 1.5*spacing  # this is the max length of the beam
     grid = Grid(length, height, spacing)
 
@@ -38,20 +42,30 @@ def main():
     # Rods
     material = Material(200000, 0.3, 7.8e-9)
     Rod.create_rods(grid, neighbour_distance_threshold, material, 0.2*spacing)
-    # TODO turn of optimization in certain Rods
     Rod.create_model_Entities(material)
+
+    # driving lane
+    driving_lane = []
+    for i in range(length+1):
+        driving_lane.append((driving_lane_height, i))
+    rods_driving_lane = Rod.getRodsAlongPath(grid, driving_lane)
+
+    Rod.toggleOptimization(rods_driving_lane)
+
+    # write rods to script
     script_builder.write_tcl_create_rods()
 
     # Boundary Conditions
     spc_node_ids = [grid.ids[y][x]
-                    for y, x in zip([2, 2], [0, length])]
+                    for y, x in zip([driving_lane_height, driving_lane_height], [0, length])]
     spc_loadCollector = LoadCollector()
     SPC(spc_loadCollector, spc_node_ids, [0, 0, 0, 0, 0, -999999])
 
     # Loads
-    load_node_id = [grid.ids[y][x] for y, x in zip([2], [2])]
+    load_node_id = [grid.ids[y][x]
+                    for y, x in zip([driving_lane_height], [load_x_coord])]
     load_loadCollector = LoadCollector()
-    Force(load_loadCollector, load_node_id, 0, -spacing, 0)
+    Force(load_loadCollector, load_node_id, 0, load_sum, 0)
     # Loadstep
     LoadStep(spc_loadCollector, load_loadCollector)
     script_builder_bc = ScriptBuilderBoundaryConditions.ScriptBuilderBoundaryConditions()
