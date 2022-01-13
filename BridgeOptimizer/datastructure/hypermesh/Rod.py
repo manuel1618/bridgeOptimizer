@@ -51,17 +51,72 @@ class Rod:
                             Rod(material, diameter, (id, neighbourId), True)
                             linksAlreadyDrawn.append((id, neighbourId))
 
-    def toggleOptimization(self, node_ids: Tuple):
+    @classmethod
+    def get_rod_based_on_node_ids(self, node_ids: Tuple):
+        """
+        Simple method to use the dictionary with all the nodes to get the Rod you are looking for.
+        Takes order not into account (works both ways)
+
+        Parameters:
+        ---------
+
+        node_ids : Tuple
+            start and end id of the nodes 
+
+        Returns: instance of the Rod you are looking for
+        """
+        node_ids_swapped = (node_ids[1], node_ids[0])
+        if node_ids in Rod.node_ids2Rod.keys():
+            return Rod.node_ids2Rod[node_ids]
+        elif node_ids_swapped in Rod.node_ids2Rod.keys():
+            return Rod.node_ids2Rod[node_ids_swapped]
+        else:
+            print(f"No Rod found for node pair: {node_ids}")
+            return None
+
+    @classmethod
+    def getRodsAlongPath(self, grid: Grid, path: List[Tuple]) -> List:
+        """
+        In order to toggle the optimization for the driving lane, the path must be selected, this method does that in the 
+        simplest way possible. By specifing a path with (y,x) coordinates
+
+        Parameters
+        ---------
+
+        path : List(Tuple)
+            List of coordinate pairs (y,x) with grid indices
+
+        Returns:
+        ---------
+        rods : List[Rod]
+            Rods which fit the given list
+        """
+        rods = []
+        node_ids = []
+        for coordinates in path:
+            y_index = int(coordinates[0])
+            x_index = int(coordinates[1])
+            node_ids.append(grid.ids[y_index][x_index])
+
+        for i in range(len(node_ids)-1):
+            rod = Rod.get_rod_based_on_node_ids((node_ids[i], node_ids[i+1]))
+            if rod != None:
+                rods.append(rod)
+        return rods
+
+    @classmethod
+    def toggleOptimization(self, rods: List):
         """
         Used to switch the optimization flag
         """
-        rod: Rod = None
-        rod = Rod.node_ids2Rod.get(node_ids)
-        if rod != None:
-            if rod.optimization:
-                rod.optimization = False
-            else:
-                rod.optimization = True
+        for rod in rods:
+            if rod != None:
+                if rod.optimization:
+                    print(f"Rod turned optimization off")
+                    rod.optimization = False
+                else:
+                    print(f"Rod turned optimization on")
+                    rod.optimization = True
 
     @classmethod
     def create_model_Entities(self, material: Material):

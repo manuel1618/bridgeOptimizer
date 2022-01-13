@@ -2,6 +2,7 @@ import os
 from typing import List, Tuple
 
 from BridgeOptimizer.datastructure.Grid import Grid
+from BridgeOptimizer.datastructure.hypermesh.ModelEntities import Material
 from BridgeOptimizer.datastructure.hypermesh.Rod import Rod
 
 
@@ -38,8 +39,11 @@ class ScriptBuilder:
             if optimization_id == 0 or not rod.optimization:
                 mat = rod.material
                 self.tcl_commands.append("*elementtype 61 1")
+                material_name = f"material_{rod_id}"
                 self.tcl_commands.append(
-                    f"*createentity mats cardimage=MAT1 includeid=0 name=\"material_{rod_id}\"")
+                    f"*createentity mats cardimage=MAT1 includeid=0 name=\"{material_name}\"")
+                self.tcl_commands.append(
+                    f"*setvalue mats name=\"{material_name}\" id={{mats {rod_id}}}")
                 self.tcl_commands.append("*clearmark materials 1")
                 self.tcl_commands.append(
                     f"*setvalue mats id={rod_id} STATUS=1 1={mat.yngs_mdl}")
@@ -47,14 +51,21 @@ class ScriptBuilder:
                     f"*setvalue mats id={rod_id} STATUS=1 3={mat.poisson_ratio}")
                 self.tcl_commands.append(
                     f"*setvalue mats id={rod_id} STATUS=1 4={mat.density}")
+                property_name = f"property_{rod_id}"
                 self.tcl_commands.append(
-                    f"*createentity props cardimage=PROD includeid=0 name=\"property_{rod_id}\"")
+                    f"*createentity props cardimage=PROD includeid=0 name=\"{property_name}\"")
+                self.tcl_commands.append(
+                    f"*setvalue props name=\"{property_name}\" id={{props {rod_id}}}")
                 self.tcl_commands.append(
                     f"*createentity beamsectcols includeid=0 name=\"beamsectcol_{rod_id}\"")
+                beamsection_name = f"beamsection_{rod_id}"
                 self.tcl_commands.append(
-                    f"*createentity beamsects includeid=0 name=\"beamsection_{rod_id}\"")
+                    f"*createentity beamsects includeid=0 name=\"{beamsection_name}\"")
+
                 self.tcl_commands.append(
-                    f"*setvalue beamsects id=1 beamsect_dim1={rod.diameter}")
+                    f"*setvalue beamsects name=\"{beamsection_name}\" id={{Beamsections {rod_id}}}")
+                self.tcl_commands.append(
+                    f"*setvalue beamsects id={rod_id} beamsect_dim1={rod.diameter}")
                 self.tcl_commands.append("*clearmark beamsects 1")
                 self.tcl_commands.append(
                     f"*setvalue beamsects id={rod_id} config=2")
@@ -71,6 +82,7 @@ class ScriptBuilder:
             if rod.optimization and optimization_id == 0:
                 optimization_id = rod_id
 
+            rod_id += 1
             if rod.optimization:
                 id = optimization_id
             else:
@@ -78,7 +90,6 @@ class ScriptBuilder:
             rod.id = id
             self.tcl_commands.append(
                 f"*rod {rod.node_ids[0]} {rod.node_ids[1]} \"property_{id}\"")
-            rod_id += 1
 
     def write_tcl_basic_topOpt_minMass(self, node_ids_deflection: List, max_deflection: float):
         """
