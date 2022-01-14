@@ -35,7 +35,7 @@ class Rod:
         self.id = 0
 
     @classmethod
-    def create_rods(self, grid: Grid, neighbour_distance_threshold: float, material: Material, diameter: float):
+    def create_rods(self, grid: Grid, neighbour_distance_lower_thresold, neighbour_distance_threshold: float, material: Material, diameter: float):
         """
         Creats a default Grid for every active node tuple within a threshold. Optimization is default set to be true
         """
@@ -45,7 +45,7 @@ class Rod:
                 if grid.matrix[y][x] == 1:
                     id = grid.ids[y][x]
                     neighbours = grid.get_neighbour_by_distance(
-                        x, y, neighbour_distance_threshold)
+                        x, y, neighbour_distance_lower_thresold, neighbour_distance_threshold)
                     for neighbourId in neighbours:
                         if (id, neighbourId) not in linksAlreadyDrawn and (neighbourId, id) not in linksAlreadyDrawn:
                             Rod(material, diameter, (id, neighbourId), True)

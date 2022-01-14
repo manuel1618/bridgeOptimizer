@@ -182,4 +182,4 @@ class ScriptBuilder:
             for line in self.tcl_commands:
                 tcl_file.write("%s\n" % line)
         hypermeshStarter = HypermeshStarter()
-        # hypermeshStarter.runHyperMesh(pathScript)
+        hypermeshStarter.runHyperMesh(pathScript)

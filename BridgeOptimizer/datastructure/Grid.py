@@ -49,7 +49,7 @@ class Grid:
             ((coord1[0]-coord2[0])**2)+((coord1[1]-coord2[1])**2))
         return distance
 
-    def get_neighbour_by_distance(self, index_x: int, index_y: int, distance_threshold: float) -> List:
+    def get_neighbour_by_distance(self, index_x: int, index_y: int, distance_lower_threshold: float, distance_threshold: float) -> List:
         """
         Returns a list of Node IDs 
         """
@@ -60,9 +60,13 @@ class Grid:
                     if index_x != x1 or index_y != y1:
                         distance = self.get_distance_by_indices(
                             index_x, index_y, x1, y1)
-                        if distance < distance_threshold:
+                        print(distance)
+                        if distance_lower_threshold < distance < distance_threshold:
+                            print("yes")
                             if self.ids[y1][x1] not in neighbours:
                                 neighbours.append(self.ids[y1][x1])
+                        else:
+                            print("no")
         return neighbours
 
     @DeprecationWarning
