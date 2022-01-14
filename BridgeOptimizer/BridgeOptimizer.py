@@ -28,7 +28,8 @@ def main():
     driving_lane_height = int(height / 2)
     load_x_coord = int(length/2)
     load_sum = -5*spacing
-    neighbour_distance_threshold = 1.5*spacing  # this is the max length of the beam
+    neighbour_distance_threshold_lower = 0.
+    neighbour_distance_threshold = 3*spacing  # this is the max length of the beam
     grid = Grid(length, height, spacing)
 
     # bridge_optimizer.blackout_zone(0,10,0,10)
@@ -41,7 +42,8 @@ def main():
 
     # Rods
     material = Material(200000, 0.3, 7.8e-9)
-    Rod.create_rods(grid, neighbour_distance_threshold, material, 0.2*spacing)
+    Rod.create_rods(grid, neighbour_distance_threshold_lower,
+                    neighbour_distance_threshold, material, 0.2*spacing)
     Rod.create_model_Entities(material)
 
     # driving lane
