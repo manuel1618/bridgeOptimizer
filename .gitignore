@@ -12,6 +12,8 @@ hmmenu.set
 *.mesg
 *.set
 *.disp
+*.rs~
+OS*.txt
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
