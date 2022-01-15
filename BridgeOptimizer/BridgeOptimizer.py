@@ -1,5 +1,6 @@
 import math
 from typing import List, Tuple
+from BridgeOptimizer.datastructure.Bridge import Bridge
 from BridgeOptimizer.datastructure.hypermesh.ModelEntities import Material
 from BridgeOptimizer.datastructure.hypermesh.Rod import Rod
 
@@ -11,6 +12,7 @@ from BridgeOptimizer.datastructure.hypermesh.LoadCollector import LoadCollector
 from BridgeOptimizer.datastructure.hypermesh.LoadStep import LoadStep
 from BridgeOptimizer.datastructure.hypermesh.Rod import Rod
 from BridgeOptimizer.datastructure.Grid import Grid
+from BridgeOptimizer.datastructure.Bridge import Bridge
 
 
 class BridgeOptimizer:
@@ -45,6 +47,10 @@ def main():
     Rod.create_rods(grid, neighbour_distance_threshold_lower,
                     neighbour_distance_threshold, material, 0.2*spacing)
     Rod.create_model_Entities(material)
+
+    # Bridge
+    bridge = Bridge(grid, Rod.instances)
+    bridge.calculate_costs()
 
     # driving lane
     driving_lane = []

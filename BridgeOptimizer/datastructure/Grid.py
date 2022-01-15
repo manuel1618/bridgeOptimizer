@@ -42,6 +42,24 @@ class Grid:
     def get_coordinates(self, index_x: int, index_y: int) -> Tuple:
         return (index_x*self.spacing, index_y*self.spacing)
 
+    def get_index_of_id(self, id: int):
+        index = (-1, -1)
+        for i in range(len(self.ids)):
+            if id in self.ids[i]:
+                if index != (-1, -1):
+                    print("Error: Duplicate Id in ids matrix.")
+                index = (i, self.ids[i].index(id))
+        if index == (-1, -1):
+            print("Error: Id not found")
+        return index
+
+    def get_distance_by_ids(self, id_1: int, id_2: int):
+        indices1 = self.get_index_of_id(id_1)
+        indices2 = self.get_index_of_id(id_2)
+        distance = self.get_distance_by_indices(
+            indices1[0], indices1[1], indices2[0], indices2[1])
+        return distance
+
     def get_distance_by_indices(self, index_x1: int, index_y1: int, index_x2: int, index_y2: int) -> float:
         coord1 = self.get_coordinates(index_x1, index_y1)
         coord2 = self.get_coordinates(index_x2, index_y2)
@@ -60,13 +78,9 @@ class Grid:
                     if index_x != x1 or index_y != y1:
                         distance = self.get_distance_by_indices(
                             index_x, index_y, x1, y1)
-                        print(distance)
                         if distance_lower_threshold < distance < distance_threshold:
-                            print("yes")
                             if self.ids[y1][x1] not in neighbours:
                                 neighbours.append(self.ids[y1][x1])
-                        else:
-                            print("no")
         return neighbours
 
     @DeprecationWarning
