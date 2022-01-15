@@ -2,6 +2,17 @@
 *.tcl
 hmmenu.set
 
+#Hypermesh
+*.out
+*.stat
+*.fem
+*.h3d
+*.mvw
+*.res
+*.mesg
+*.set
+*.disp
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
