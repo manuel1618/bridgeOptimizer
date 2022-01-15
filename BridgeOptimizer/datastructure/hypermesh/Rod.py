@@ -33,6 +33,8 @@ class Rod:
         self.node_ids = node_ids
         self.optimization = optimization
         self.id = 0
+        self.cost_first_segment = 300  # hard_coded for now
+        self.cost_per_distance = 100  # hard_coded for now
 
     @classmethod
     def create_rods(self, grid: Grid, neighbour_distance_lower_thresold, neighbour_distance_threshold: float, material: Material, diameter: float):
@@ -48,6 +50,7 @@ class Rod:
                         x, y, neighbour_distance_lower_thresold, neighbour_distance_threshold)
                     for neighbourId in neighbours:
                         if (id, neighbourId) not in linksAlreadyDrawn and (neighbourId, id) not in linksAlreadyDrawn:
+
                             Rod(material, diameter, (id, neighbourId), True)
                             linksAlreadyDrawn.append((id, neighbourId))
 
@@ -129,3 +132,7 @@ class Rod:
         for rod in Rod.instances:
             property = Property(material, rod.diameter, rod.optimization)
             Component(property)
+
+    def calculate_cost(self, grid: Grid):
+        distance = grid.get_distance_by_ids(self.node_ids[0], self.node_ids[1])
+        return (self.cost_first_segment+distance*self.cost_per_distance)
