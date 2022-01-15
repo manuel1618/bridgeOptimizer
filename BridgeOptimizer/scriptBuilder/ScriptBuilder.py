@@ -140,6 +140,56 @@ class ScriptBuilder:
             f"*opticonstraintcreate \"max_deflection\" 2 1 -1e+20 {max_deflection} 1 1")
         self.tcl_commands.append("*optiobjectivecreate 1 0 0")
 
+    def write_tcl_control_card_displacement_output(self):
+        self.tcl_commands.append("*cardcreate \"GLOBAL_OUTPUT_REQUEST\"")
+        self.tcl_commands.append("*attributeupdateint cards 1 2938 1 2 0 1")
+        self.tcl_commands.append("*attributeupdateint cards 1 1901 1 0 0 1")
+        self.tcl_commands.append("*createstringarray 1 \"        \"")
+        self.tcl_commands.append(
+            "*attributeupdatestringarray cards 1 4871 1 2 0 1 1")
+        self.tcl_commands.append("*createstringarray 1 \"OPTI\"")
+        self.tcl_commands.append(
+            "*attributeupdatestringarray cards 1 4315 1 2 0 1 1")
+        self.tcl_commands.append("*createstringarray 1 \"        \"")
+        self.tcl_commands.append(
+            "*attributeupdatestringarray cards 1 4008 1 2 0 1 1")
+        self.tcl_commands.append("*createstringarray 1 \"        \"")
+        self.tcl_commands.append(
+            "*attributeupdatestringarray cards 1 4876 1 2 0 1 1")
+        self.tcl_commands.append("*createstringarray 1 \"        \"")
+        self.tcl_commands.append(
+            "*attributeupdatestringarray cards 1 2174 1 2 0 1 1")
+        self.tcl_commands.append("*createstringarray 1 \"        \"")
+        self.tcl_commands.append(
+            "*attributeupdatestringarray cards 1 2287 1 2 0 1 1")
+        self.tcl_commands.append("*createstringarray 1 \"        \"")
+        self.tcl_commands.append(
+            "*attributeupdatestringarray cards 1 2175 1 2 0 1 1")
+        self.tcl_commands.append("*createstringarray 1 \"        \"")
+        self.tcl_commands.append(
+            "*attributeupdatestringarray cards 1 12604 1 2 0 1 1")
+        self.tcl_commands.append("*createstringarray 1 \"        \"")
+        self.tcl_commands.append(
+            "*attributeupdatestringarray cards 1 9621 1 2 0 1 1")
+        self.tcl_commands.append("*createstringarray 1 \"        \"")
+        self.tcl_commands.append(
+            "*attributeupdatestringarray cards 1 10026 1 2 0 1 1")
+        self.tcl_commands.append("*createstringarray 1 \"        \"")
+        self.tcl_commands.append(
+            "*attributeupdatestringarray cards 1 10027 1 2 0 1 1")
+        self.tcl_commands.append("*createstringarray 1 \"        \"")
+        self.tcl_commands.append(
+            "*attributeupdatestringarray cards 1 11069 1 2 0 1 1")
+        self.tcl_commands.append("*createarray 1 0")
+        self.tcl_commands.append(
+            "*attributeupdateentityidarray cards 1 11314 1 0 0 analysisparameters 1 1")
+        self.tcl_commands.append("*createstringarray 1 \"        \"")
+        self.tcl_commands.append(
+            "*attributeupdatestringarray cards 1 11387 1 2 0 1 1")
+        self.tcl_commands.append("*createstringarray 1 \"ALL\"")
+        self.tcl_commands.append(
+            "*attributeupdatestringarray cards 1 2939 1 2 0 1 1")
+
     def write_tcl_basic_topOpt_minCompliance(self, max_volumr_frac: float):
         property_names = ""
         for rod in Rod.instances:
@@ -175,11 +225,3 @@ class ScriptBuilder:
         self.tcl_commands.append(
             f"*opticonstraintcreate \"vf_dconstraint\" 2 1 -1e+20 {max_volumr_frac} 1 0")
         self.tcl_commands.append(f"*optiobjectivecreate 1 0 1")
-
-    def write_script_and_run(self):
-        with open('tcl_commands.tcl', 'w') as tcl_file:
-            pathScript = os.path.abspath("tcl_commands.tcl")
-            for line in self.tcl_commands:
-                tcl_file.write("%s\n" % line)
-        hypermeshStarter = HypermeshStarter()
-        hypermeshStarter.runHyperMesh(pathScript)

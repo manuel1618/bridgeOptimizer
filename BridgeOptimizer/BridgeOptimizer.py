@@ -1,8 +1,10 @@
+from importlib.resources import path
 import math
 from typing import List, Tuple
 from BridgeOptimizer.datastructure.Bridge import Bridge
 from BridgeOptimizer.datastructure.hypermesh.ModelEntities import Material
 from BridgeOptimizer.datastructure.hypermesh.Rod import Rod
+from BridgeOptimizer.scriptBuilder.HypermeshStarter import HypermeshStarter
 
 import BridgeOptimizer.scriptBuilder.ScriptBuilderBoundaryConditions as ScriptBuilderBoundaryConditions
 import BridgeOptimizer.scriptBuilder.ScriptBuilder as ScriptBuilder
@@ -13,6 +15,7 @@ from BridgeOptimizer.datastructure.hypermesh.LoadStep import LoadStep
 from BridgeOptimizer.datastructure.hypermesh.Rod import Rod
 from BridgeOptimizer.datastructure.Grid import Grid
 from BridgeOptimizer.datastructure.Bridge import Bridge
+from BridgeOptimizer.postprocessing.GlobalOutputReader import DisplacementReader
 
 
 class BridgeOptimizer:
@@ -79,9 +82,28 @@ def main():
     script_builder_bc = ScriptBuilderBoundaryConditions.ScriptBuilderBoundaryConditions()
     script_builder_bc.write_tcl_commands_loadsteps(script_builder.tcl_commands)
 
+    # Get Constraint by Analyzing
+    script_builder.write_tcl_control_card_displacement_output()
+    hypermesh_starter = HypermeshStarter("C:\\temp", "model")
+    calc_dir = "C:\\temp"
+    hypermesh_starter.write_script(tcl_commands=script_builder.tcl_commands,
+                                   calc_dir=calc_dir, run=True,
+                                   user_param="-optskip -len 10000 -nproc 8")
+    hypermesh_starter.runHyperMesh(batch=True, wait=True)
+    path_to_disp_file = calc_dir+"/"+hypermesh_starter.model_name+".disp"
+    path_to_disp_file.replace("\\", "/")
+    diplacement_reader = DisplacementReader(path_to_disp_file)
+    max_disp = diplacement_reader.get_max_displacement()[1]
+    print(f"Max diplacements: {max_disp}")
+
     # TopOpt
-    script_builder.write_tcl_basic_topOpt_minMass(load_node_id, 0.3*spacing)
-    script_builder.write_script_and_run()
+    script_builder.write_tcl_basic_topOpt_minMass(load_node_id, 2*max_disp)
+    calc_dir = "C:\\temp"
+    hypermesh_starter_topOpt = HypermeshStarter("C:\\temp", "model")
+    hypermesh_starter_topOpt.write_script(tcl_commands=script_builder.tcl_commands,
+                                          calc_dir=calc_dir, run=False,
+                                          user_param="-len 10000 -nproc 8")
+    hypermesh_starter_topOpt.runHyperMesh(batch=False, wait=False)
 
 
 if __name__ == "__main__":

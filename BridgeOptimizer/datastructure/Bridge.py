@@ -23,7 +23,7 @@ class Bridge:
         total_costs: float = 0
         for rod in self.rods:
             cost_rod = rod.calculate_cost(self.grid)
-            print(f"Rod: {rod.node_ids} costs {cost_rod}")
+            #print(f"Rod: {rod.node_ids} costs {cost_rod}")
             total_costs += cost_rod
 
         self.costs = total_costs
