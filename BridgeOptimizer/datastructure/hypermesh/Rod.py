@@ -24,6 +24,7 @@ class Rod:
     """
     instances = []
     node_ids2Rod: Dict = dict()
+    linksAlreadyDrawn = []
 
     def __init__(self, material: Material, diameter: float, node_ids: Tuple, optimization: bool) -> None:
         Rod.instances.append(self)
@@ -41,7 +42,6 @@ class Rod:
         """
         Creats a default Grid for every active node tuple within a threshold. Optimization is default set to be true
         """
-        linksAlreadyDrawn = []
         for x in range(len(grid.matrix[0])):
             for y in range(len(grid.matrix)):
                 if grid.matrix[y][x] == 1:
@@ -49,10 +49,34 @@ class Rod:
                     neighbours = grid.get_neighbour_by_distance(
                         x, y, neighbour_distance_lower_thresold, neighbour_distance_threshold)
                     for neighbourId in neighbours:
-                        if (id, neighbourId) not in linksAlreadyDrawn and (neighbourId, id) not in linksAlreadyDrawn:
+                        if (id, neighbourId) not in self.linksAlreadyDrawn and (neighbourId, id) not in self.linksAlreadyDrawn:
 
                             Rod(material, diameter, (id, neighbourId), True)
-                            linksAlreadyDrawn.append((id, neighbourId))
+                            self.linksAlreadyDrawn.append((id, neighbourId))
+
+    @classmethod
+    def driving_lane_ereaser(self, node_path: List[int]):
+        """
+        Makes room for new elements by deleting every element which is on the node path
+        """
+        rods_to_delete = []
+
+        rod: Rod = None
+        for rod in Rod.instances:
+            node1 = rod.node_ids[0]
+            node2 = rod.node_ids[1]
+            if node1 in node_path:
+                if node2 in node_path:
+                    rods_to_delete.append(rod)
+
+        for rod in rods_to_delete:
+            Rod.delete_rod(rod)
+
+    def delete_rod(self):
+        """
+        Deletes the instance by removing from all instances
+        """
+        Rod.instances.remove(self)
 
     @classmethod
     def get_rod_based_on_node_ids(self, node_ids: Tuple):
@@ -77,6 +101,7 @@ class Rod:
             print(f"No Rod found for node pair: {node_ids}")
             return None
 
+    @DeprecationWarning
     @classmethod
     def getRodsAlongPath(self, grid: Grid, path: List[Tuple]) -> List:
         """

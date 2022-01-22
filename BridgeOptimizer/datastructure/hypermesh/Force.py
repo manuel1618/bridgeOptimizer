@@ -10,6 +10,8 @@ class Force:
     ----------
     load_collector: LoadCollector 
         LoadCollector where the Force will be put into
+    nodeIds:List[int]
+        node ids for which the load shall apply
     x: float 
         amount of Force in X
     y: float 
