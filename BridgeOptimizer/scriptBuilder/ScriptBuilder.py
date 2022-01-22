@@ -38,7 +38,6 @@ class ScriptBuilder:
 
             if optimization_id == 0 or not rod.optimization:
                 mat = rod.material
-                self.tcl_commands.append("*elementtype 61 1")
                 material_name = f"material_{rod_id}"
                 self.tcl_commands.append(
                     f"*createentity mats cardimage=MAT1 includeid=0 name=\"{material_name}\"")
@@ -88,6 +87,8 @@ class ScriptBuilder:
             else:
                 id = rod_id
             rod.id = id
+            self.tcl_commands.append("*setoption topofacecolor=4")
+            self.tcl_commands.append("*elementtype 61 1")
             self.tcl_commands.append(
                 f"*rod {rod.node_ids[0]} {rod.node_ids[1]} \"property_{id}\"")
 
@@ -119,6 +120,7 @@ class ScriptBuilder:
         self.tcl_commands.append(
             "*optiresponsesetequationdata4 \"mass\" 0 0 0 0 1 0 1 0")
         line_for_selecting_nodes = f"*createarray {len(node_ids_deflection)+6}"
+        node_ids_deflection.sort()
         for node in node_ids_deflection:
             line_for_selecting_nodes += f" {node}"
         line_for_selecting_nodes += " 0 0 0 0 0 0"
@@ -126,7 +128,7 @@ class ScriptBuilder:
         # self.tcl_commands.add("*createarray 8 145 162 0 0 0 0 0 0") # reference with two nodes
         self.tcl_commands.append("*createdoublearray 6 0 0 0 0 0 0")
         self.tcl_commands.append(
-            f"*optiresponsecreate \"displacement\" 7 0 0 7 0 2 6 0 0 0 1 {len(node_ids_deflection)+6} 1 6")
+            f"*optiresponsecreate \"displacement\" 7 0 0 7 0 {len(node_ids_deflection)} 6 0 0 0 1 {len(node_ids_deflection)+6} 1 6")
         self.tcl_commands.append(
             "*optiresponsesetequationdata1 \"displacement\" 0 0 0 0 1 0")
         self.tcl_commands.append(

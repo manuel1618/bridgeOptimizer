@@ -2,6 +2,7 @@ from importlib.resources import path
 import math
 from typing import List, Tuple
 from BridgeOptimizer.datastructure.Bridge import Bridge
+from BridgeOptimizer.datastructure.DrivingLane import DrivingLane
 from BridgeOptimizer.datastructure.hypermesh.ModelEntities import Material
 from BridgeOptimizer.datastructure.hypermesh.Rod import Rod
 from BridgeOptimizer.scriptBuilder.HypermeshStarter import HypermeshStarter
@@ -31,10 +32,11 @@ def main():
     spacing = 1.25
 
     driving_lane_height = int(height / 2)
-    load_x_coord = int(length/2)
-    load_sum = -5*spacing
+    load_sum = -1500*spacing
     neighbour_distance_threshold_lower = 0.
-    neighbour_distance_threshold = 3*spacing  # this is the max length of the beam
+    # this is grid beam resolution, min 1.5 * spacing
+    neighbour_distance_threshold = 1.5*spacing
+    max_beam_length = 4*spacing
     grid = Grid(length, height, spacing)
 
     # bridge_optimizer.blackout_zone(0,10,0,10)
@@ -47,21 +49,21 @@ def main():
 
     # Rods
     material = Material(200000, 0.3, 7.8e-9)
+    diameter = 0.2*spacing
     Rod.create_rods(grid, neighbour_distance_threshold_lower,
-                    neighbour_distance_threshold, material, 0.2*spacing)
+                    neighbour_distance_threshold, material, diameter)
+    # Driving Lane
+    driving_lane_nodes = grid.get_path_a_star(grid.ids[driving_lane_height]
+                                              [0], grid.ids[driving_lane_height][length])
+    # delete all Rods belonging to the driving lane
+    Rod.driving_lane_ereaser(driving_lane_nodes)
+    driving_lane = DrivingLane(max_beam_length, driving_lane_nodes, grid)
+    driving_lane.create_Rods_along_nodes_path(material, diameter)
     Rod.create_model_Entities(material)
 
     # Bridge
     bridge = Bridge(grid, Rod.instances)
     bridge.calculate_costs()
-
-    # driving lane
-    driving_lane = []
-    for i in range(length+1):
-        driving_lane.append((driving_lane_height, i))
-    rods_driving_lane = Rod.getRodsAlongPath(grid, driving_lane)
-
-    Rod.toggleOptimization(rods_driving_lane)
 
     # write rods to script
     script_builder.write_tcl_create_rods()
@@ -73,10 +75,10 @@ def main():
     SPC(spc_loadCollector, spc_node_ids, [0, 0, 0, 0, 0, -999999])
 
     # Loads
-    load_node_id = [grid.ids[y][x]
-                    for y, x in zip([driving_lane_height], [load_x_coord])]
+    load_node_ids = driving_lane.get_load_nodes()
+    print(load_node_ids)
     load_loadCollector = LoadCollector()
-    Force(load_loadCollector, load_node_id, 0, load_sum, 0)
+    Force(load_loadCollector, load_node_ids, 0, load_sum, 0)
     # Loadstep
     LoadStep(spc_loadCollector, load_loadCollector)
     script_builder_bc = ScriptBuilderBoundaryConditions.ScriptBuilderBoundaryConditions()
@@ -97,7 +99,9 @@ def main():
     print(f"Max diplacements: {max_disp}")
 
     # TopOpt
-    script_builder.write_tcl_basic_topOpt_minMass(load_node_id, 2*max_disp)
+    max_disp_constraint = 3*max_disp
+    script_builder.write_tcl_basic_topOpt_minMass(
+        load_node_ids, max_disp_constraint)
     calc_dir = "C:\\temp"
     hypermesh_starter_topOpt = HypermeshStarter("C:\\temp", "model")
     hypermesh_starter_topOpt.write_script(tcl_commands=script_builder.tcl_commands,
