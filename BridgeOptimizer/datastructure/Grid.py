@@ -1,5 +1,9 @@
 import math
+from tkinter import N
+from tracemalloc import start
 from typing import List, Tuple
+
+import sys
 
 
 class Grid:
@@ -69,7 +73,7 @@ class Grid:
 
     def get_neighbour_by_distance(self, index_x: int, index_y: int, distance_lower_threshold: float, distance_threshold: float) -> List:
         """
-        Returns a list of Node IDs 
+        Returns a list of Node IDs
         """
         neighbours = []
         for x1 in range(len(self.matrix[0])):
@@ -83,7 +87,85 @@ class Grid:
                                 neighbours.append(self.ids[y1][x1])
         return neighbours
 
-    @DeprecationWarning
+    def get_path_a_star(self, start_node: int, end_node: int):
+        """
+        Simple implementation of the A* algorithm, based on:
+        https://medium.com/@nicholas.w.swift/easy-a-star-pathfinding-7e6689c7f7b2 (22.01.2022)
+
+        Parameters:
+        start_node:int
+          Id of the start node
+        end_node:int
+          Id of the end node
+
+        Known issues_
+          Right now, only N-S-E-W neighbours considered. 
+
+        Returns:
+          List of the nodes for the shortest path found
+
+        """
+        open_list = [start_node]
+        closed_list = []
+
+        costs_g = {}
+        costs_g[start_node] = 0
+
+        costs_h = {}
+        costs_h[start_node] = 0
+
+        costs_f = {}
+        costs_f[start_node] = 0
+
+        parents = {}
+        parents[start_node] = None
+
+        while len(open_list) > 0:
+            current_node = open_list[0]
+            current_index = 0
+            # calculate the total costs and find the minimum (sum of distances)
+            for index, item in enumerate(open_list):
+                if costs_f[item] < costs_f[current_node]:
+                    current_node = item
+                    current_index = index
+
+            # move current to closed list
+            open_list.pop(current_index)
+            closed_list.append(current_node)
+
+            # found the path -->end
+            if current_node == end_node:
+                path = []
+                current = current_node
+                while current != None:
+                    path.append(current)
+                    current = parents[current]
+                return path[::-1]  # Return reversed path
+
+            # get neighbours
+            indices = self.get_index_of_id(current_node)
+            index_y = indices[0]
+            index_x = indices[1]
+            for neighbour in self.get_neighbour_ids(index_x, index_y):
+                if self.matrix[index_y][index_x] == 1:
+                    if neighbour in closed_list:
+                        continue
+                    parents[neighbour] = current_node
+
+                    costs_g[neighbour] = costs_g[current_node] + \
+                        self.get_distance_by_ids(neighbour, current_node)
+                    costs_h[neighbour] = self.get_distance_by_ids(
+                        neighbour, end_node)
+                    costs_f[neighbour] = costs_g[neighbour] + \
+                        costs_h[neighbour]
+
+                    if neighbour in open_list:
+                        min_g = min([costs_g[node] for node in open_list])
+                        if costs_g[neighbour] > min_g:
+                            continue
+                    else:
+                        open_list.append(neighbour)
+
     def get_neighbour_ids(self, index_x: int, index_y: int) -> List:
         neighbours = []
         # east west
@@ -112,3 +194,15 @@ class Grid:
             if self.matrix[index_y-1][index_x] == 1:
                 neighbours.append(self.ids[index_y-1][index_x])
         return neighbours
+
+
+if __name__ == "__main__":
+    grid = Grid(10, 10, 1)
+    grid.ids = [[x+y*11 for x in range(len(grid.matrix[0]))]
+                for y in range(len(grid.matrix))]
+    grid.matrix[3][3] = 0
+    grid.print_matrix()
+    grid.print_matrix_nodeIds()
+
+    path = grid.get_path_a_star(0, 98)
+    print(path)

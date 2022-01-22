@@ -54,6 +54,12 @@ class Rod:
                             Rod(material, diameter, (id, neighbourId), True)
                             linksAlreadyDrawn.append((id, neighbourId))
 
+    def delete_rod(self):
+        """
+        Deletes the instance by removing from all instances
+        """
+        Rod.instances.remove(self)
+
     @classmethod
     def get_rod_based_on_node_ids(self, node_ids: Tuple):
         """
