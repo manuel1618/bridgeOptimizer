@@ -110,7 +110,7 @@ def main():
     hypermesh_starter_topOpt.write_script(tcl_commands=script_builder.tcl_commands,
                                           calc_dir=calc_dir, run=True,
                                           user_param="-len 10000 -nproc 8")
-    hypermesh_starter_topOpt.runHyperMesh(batch=True, wait=False)
+    hypermesh_starter_topOpt.runHyperMesh(batch=True, wait=True)
 
 
 if __name__ == "__main__":

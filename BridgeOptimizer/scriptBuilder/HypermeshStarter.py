@@ -63,6 +63,8 @@ class HypermeshStarter:
                 print("Waiting for Optistruct Process to Finish")
                 time.sleep(1)
 
+        print("Finished Altair Run")
+
     def add_export_and_run_options(self, fem_path: str, user_param: str):
         """
         Adds the lines for exporting a .fem file and run options
@@ -81,7 +83,7 @@ class HypermeshStarter:
             f"exec \"{altair_home_exec}/hwsolvers/scripts/optistruct.bat\" \"{fem_path}\" {user_param} &")
         # no gui (later)
         # tcl_commands.append(f"exec cmd /K START \"{altair_home_exec}/hwsolvers/scripts/optistruct.bat\" \"{export_path}\" {user_param} &")
-        self.tcl_commands.append("*quit 1")
+        #self.tcl_commands.append("*quit 1")
 
     def write_script(self, tcl_commands: List[str], calc_dir: str, run: bool, user_param: str):
         """
