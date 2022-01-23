@@ -90,9 +90,10 @@ class HypermeshStarter:
         """
         self.tcl_commands = [
             line for line in tcl_commands]  # copy as we don't want to change the original data
-
+        calc_dir = calc_dir.replace("\\", "/")  # hypermesh does not like \
+        self.tcl_commands.insert(
+            0, f"cd {calc_dir}")  # change working directory
         fem_path = calc_dir+"/"+self.model_name+".fem"
-        fem_path = fem_path.replace("\\", "/")
         if run:
             self.add_export_and_run_options(fem_path, user_param)
 
