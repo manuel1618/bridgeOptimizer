@@ -35,12 +35,13 @@ def main():
     load_sum = -1500*spacing
     neighbour_distance_threshold_lower = 0.
     # this is grid beam resolution, min 1.5 * spacing
-    neighbour_distance_threshold = 1.5*spacing
+    neighbour_distance_threshold = 5*spacing
     max_beam_length = 4*spacing
     grid = Grid(length, height, spacing)
 
-    # bridge_optimizer.blackout_zone(0,10,0,10)
-    # bridge_optimizer.blackout_zone(-10,0,0,10)
+    # blackout zone
+    grid.blackout_zone(0, 0, driving_lane_height-1, length+1)
+    grid.print_matrix()
 
     # Build script
     script_builder = ScriptBuilder.ScriptBuilder(grid)
@@ -52,6 +53,7 @@ def main():
     diameter = 0.2*spacing
     Rod.create_rods(grid, neighbour_distance_threshold_lower,
                     neighbour_distance_threshold, material, diameter)
+    grid.print_matrix_nodeIds()
     # Driving Lane
     driving_lane_nodes = grid.get_path_a_star(grid.ids[driving_lane_height]
                                               [0], grid.ids[driving_lane_height][length])
@@ -103,11 +105,12 @@ def main():
     script_builder.write_tcl_basic_topOpt_minMass(
         load_node_ids, max_disp_constraint)
     calc_dir = "C:\\temp"
-    hypermesh_starter_topOpt = HypermeshStarter("C:\\temp", "model")
+    hypermesh_starter_topOpt = HypermeshStarter(
+        "C:\\temp", "model_optimization")
     hypermesh_starter_topOpt.write_script(tcl_commands=script_builder.tcl_commands,
-                                          calc_dir=calc_dir, run=False,
+                                          calc_dir=calc_dir, run=True,
                                           user_param="-len 10000 -nproc 8")
-    hypermesh_starter_topOpt.runHyperMesh(batch=False, wait=False)
+    hypermesh_starter_topOpt.runHyperMesh(batch=True, wait=False)
 
 
 if __name__ == "__main__":
