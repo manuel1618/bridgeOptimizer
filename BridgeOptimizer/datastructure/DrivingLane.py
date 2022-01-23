@@ -51,16 +51,7 @@ class DrivingLane:
 
         distance = self.calculate_distance(all_nodes[0], all_nodes[-1])
 
-        # Driving lane can be built with just one beam
-        if distance < max_beam_length:
-            start_left = all_nodes.popleft()
-            start_right = all_nodes.pop()
-            all_nodes.clear()
-        elif distance == 2*max_beam_length:
-            start_left = all_nodes.popleft()
-            start_right = all_nodes.pop()
-
-            # Driving lane must have at least 2 elements
+        # Driving lane must have at least 2 elements
         if distance > 2*max_beam_length:
             start_left = all_nodes.popleft()
             start_right = all_nodes.pop()
@@ -70,7 +61,7 @@ class DrivingLane:
                 distance_remaining = self.calculate_distance(
                     start_left, start_right)
 
-                if distance_remaining < 2*max_beam_length:
+                if distance_remaining <= 2*max_beam_length:
                     if distance_remaining < max_beam_length:
                         print(f"Final {start_left} {start_right}")
                         left_side.append(start_left)
@@ -111,6 +102,9 @@ class DrivingLane:
 
                 start_left = next_left
                 start_right = next_right
+        else:
+            start_left = all_nodes.popleft()
+            start_right = all_nodes.pop()
 
         # one element case
         if len(all_nodes) == 0:

@@ -35,13 +35,13 @@ def main():
     load_sum = -1500*spacing
     neighbour_distance_threshold_lower = 0.
     # this is grid beam resolution, min 1.5 * spacing
-    neighbour_distance_threshold = 5*spacing
+    neighbour_distance_threshold = 1.5*spacing
     max_beam_length = 4*spacing
     grid = Grid(length, height, spacing)
 
     # blackout zone
     grid.blackout_zone(0, 0, driving_lane_height-1, length+1)
-    grid.print_matrix()
+    # grid.print_matrix()
 
     # Build script
     script_builder = ScriptBuilder.ScriptBuilder(grid)
@@ -61,6 +61,7 @@ def main():
     Rod.driving_lane_ereaser(driving_lane_nodes)
     driving_lane = DrivingLane(max_beam_length, driving_lane_nodes, grid)
     driving_lane.create_Rods_along_nodes_path(material, 0.1*diameter)
+    # Model Entities Creation
     Rod.create_model_Entities(material)
 
     # Bridge
