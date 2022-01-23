@@ -30,9 +30,9 @@ class Grid:
         self.ids = [[0 for x in range(len(self.matrix[0]))]
                     for y in range(len(self.matrix))]
 
-    def blackout_zone(self, lowerX: int, upperX: int, lowerY: int, upperY: int):
-        for x in range(lowerX, upperX+1):
-            for y in range(lowerY, upperY+1):
+    def blackout_zone(self, lowerY: int, lowerX: int, upperY: int, upperX: int):
+        for x in range(lowerX, upperX):
+            for y in range(lowerY, upperY):
                 self.matrix[y][x] = 0
 
     def print_matrix(self):
