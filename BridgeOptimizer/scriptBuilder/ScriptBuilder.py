@@ -81,7 +81,6 @@ class ScriptBuilder:
             if rod.optimization and optimization_id == 0:
                 optimization_id = rod_id
 
-            rod_id += 1
             if rod.optimization:
                 id = optimization_id
             else:
@@ -91,6 +90,7 @@ class ScriptBuilder:
             self.tcl_commands.append("*elementtype 61 1")
             self.tcl_commands.append(
                 f"*rod {rod.node_ids[0]} {rod.node_ids[1]} \"property_{id}\"")
+            rod_id += 1
 
     def write_tcl_basic_topOpt_minMass(self, node_ids_deflection: List, max_deflection: float):
         """

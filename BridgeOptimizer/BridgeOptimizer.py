@@ -58,7 +58,7 @@ def main():
     # delete all Rods belonging to the driving lane
     Rod.driving_lane_ereaser(driving_lane_nodes)
     driving_lane = DrivingLane(max_beam_length, driving_lane_nodes, grid)
-    driving_lane.create_Rods_along_nodes_path(material, diameter)
+    driving_lane.create_Rods_along_nodes_path(material, 0.1*diameter)
     Rod.create_model_Entities(material)
 
     # Bridge
@@ -99,7 +99,7 @@ def main():
     print(f"Max diplacements: {max_disp}")
 
     # TopOpt
-    max_disp_constraint = 3*max_disp
+    max_disp_constraint = 5*max_disp
     script_builder.write_tcl_basic_topOpt_minMass(
         load_node_ids, max_disp_constraint)
     calc_dir = "C:\\temp"
