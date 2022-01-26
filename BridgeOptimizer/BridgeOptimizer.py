@@ -27,7 +27,7 @@ class BridgeOptimizer:
 
 
 def main():
-    length = 8
+    length = 32
     height = 8
     spacing = 1.25
 
@@ -36,7 +36,7 @@ def main():
     neighbour_distance_threshold_lower = 0.
     # this is grid beam resolution, min 1.5 * spacing
     neighbour_distance_threshold = 1.5*spacing
-    max_beam_length = 4*spacing
+    max_beam_length = 8*spacing
     grid = Grid(length, height, spacing)
 
     # blackout zone
