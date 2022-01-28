@@ -100,7 +100,6 @@ class ScriptBuilder:
         for rod in Rod.instances:
             if rod.optimization:
                 optimization_id = rod.id
-
         self.tcl_commands.append(
             f"*createmark properties 1 property_{optimization_id}")
         self.tcl_commands.append("*topologydesvarcreate 1 \"topOpt\" f0 0 5")
