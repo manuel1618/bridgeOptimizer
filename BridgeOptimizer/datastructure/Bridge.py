@@ -50,7 +50,7 @@ class Bridge:
                 element_id = line.split(",")[0]
                 element_density = float(line.split(",")[1])
                 if element_density < density_threshold:
-                    rods_to_remove.append(element_id)
+                    rods_to_remove.append(Rod.get_rod_by_id(int(element_id)))
 
         print(f"Number of Rods before removal: {len(self.rods)}")
         for rod_to_remove in rods_to_remove:
