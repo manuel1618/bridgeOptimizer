@@ -5,10 +5,11 @@ from BridgeOptimizer.datastructure.Bridge import Bridge
 from BridgeOptimizer.datastructure.DrivingLane import DrivingLane
 from BridgeOptimizer.datastructure.hypermesh.ModelEntities import Material
 from BridgeOptimizer.datastructure.hypermesh.Rod import Rod
-from BridgeOptimizer.scriptBuilder.HypermeshStarter import HypermeshStarter
+from BridgeOptimizer.scriptBuilder.HyperWorksStarter import HyperWorksStarter
 
 import BridgeOptimizer.scriptBuilder.ScriptBuilderBoundaryConditions as ScriptBuilderBoundaryConditions
 import BridgeOptimizer.scriptBuilder.ScriptBuilder as ScriptBuilder
+from BridgeOptimizer.scriptBuilder.ScriptBuilderHyperview import ScriptBuilderHyperview
 from BridgeOptimizer.datastructure.hypermesh.SPC import SPC
 from BridgeOptimizer.datastructure.hypermesh.Force import Force
 from BridgeOptimizer.datastructure.hypermesh.LoadCollector import LoadCollector
@@ -21,12 +22,17 @@ from BridgeOptimizer.postprocessing.GlobalOutputReader import DisplacementReader
 
 class BridgeOptimizer:
     """
-    Main class of the Bridge Optimizer, used to be called Mesh
+    Main class of the Bridge Optimizer
 
     """
 
 
 def main():
+
+    simulation_dir = "C:\\temp"
+    model_name_optimization = "myBridgeOptimizationMode"
+    density_threshold = 0.2
+
     length = 32
     height = 8
     spacing = 1.25
@@ -89,13 +95,14 @@ def main():
 
     # Get Constraint by Analyzing
     script_builder.write_tcl_control_card_displacement_output()
-    hypermesh_starter = HypermeshStarter("C:\\temp", "model")
-    calc_dir = "C:\\temp"
+    hypermesh_starter = HyperWorksStarter(
+        simulation_dir, model_name_optimization+"_disp")
+
     hypermesh_starter.write_script(tcl_commands=script_builder.tcl_commands,
-                                   calc_dir=calc_dir, run=True,
+                                   calc_dir=simulation_dir, run=True,
                                    user_param="-optskip -len 10000 -nproc 8")
     hypermesh_starter.runHyperMesh(batch=True, wait=True)
-    path_to_disp_file = calc_dir+"/"+hypermesh_starter.model_name+".disp"
+    path_to_disp_file = simulation_dir+"/"+hypermesh_starter.model_name+".disp"
     path_to_disp_file.replace("\\", "/")
     diplacement_reader = DisplacementReader(path_to_disp_file)
     max_disp = diplacement_reader.get_max_displacement()[1]
@@ -105,13 +112,28 @@ def main():
     max_disp_constraint = 5*max_disp
     script_builder.write_tcl_basic_topOpt_minMass(
         load_node_ids, max_disp_constraint)
-    calc_dir = "C:\\temp"
-    hypermesh_starter_topOpt = HypermeshStarter(
-        "C:\\temp", "model_optimization")
+    hypermesh_starter_topOpt = HyperWorksStarter(
+        simulation_dir, model_name_optimization)
     hypermesh_starter_topOpt.write_script(tcl_commands=script_builder.tcl_commands,
-                                          calc_dir=calc_dir, run=True,
+                                          calc_dir=simulation_dir, run=True,
                                           user_param="-len 10000 -nproc 8")
     hypermesh_starter_topOpt.runHyperMesh(batch=True, wait=True)
+
+    # Density File
+    path_to_des_file = simulation_dir+"/"+model_name_optimization+"_des.h3d"
+    path_to_density_file = simulation_dir+"/" + \
+        model_name_optimization+"_densityFile.txt"
+    # Remove Rods which did not make it
+    bridge.remove_rods_with_low_density(
+        simulation_dir, path_to_des_file, path_to_density_file, density_threshold)
+
+    # Screenshots
+    script_builder_hyperview = ScriptBuilderHyperview()
+    script_builder_hyperview.screenshot_element_density(
+        path_to_des_file, density_threshold)
+    hypermesh_starter.write_script_hyperview(
+        simulation_dir, script_builder_hyperview.tcl_commands)
+    hypermesh_starter.runHyperview(True, True)
 
 
 if __name__ == "__main__":

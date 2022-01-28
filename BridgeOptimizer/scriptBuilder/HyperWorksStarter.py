@@ -6,7 +6,7 @@ from winreg import HKEY_LOCAL_MACHINE
 import psutil
 
 
-class HypermeshStarter:
+class HyperWorksStarter:
     """
     Hypermesh Starter Class (Windows only currently)
     """
@@ -31,7 +31,7 @@ class HypermeshStarter:
     def initialize_tcl_commands() -> List:
         tcl_commands = []
         tcl_commands.append(
-            f"*templatefileset \"{HypermeshStarter.ALTAIR_HOME}/hwdesktop/templates/feoutput/optistruct/optistruct\"")
+            f"*templatefileset \"{HyperWorksStarter.ALTAIR_HOME}/hwdesktop/templates/feoutput/optistruct/optistruct\"")
         return tcl_commands
 
     def initialize_tcl_commands_hyperview() -> List:
@@ -126,7 +126,7 @@ class HypermeshStarter:
 
     def write_script(self, tcl_commands: List[str], calc_dir: str, run: bool, user_param: str):
         """
-        writes the script and runs it. For the list or user_param, see the hypermeshStarter method
+        writes the script and runs it. For the list or user_param, see the HyperWorksStarter method
 
         """
         self.tcl_commands = [

@@ -6,14 +6,14 @@ from BridgeOptimizer.datastructure.hypermesh.ModelEntities import Material
 from BridgeOptimizer.datastructure.hypermesh.Rod import Rod
 
 
-from .HypermeshStarter import HypermeshStarter
+from .HyperWorksStarter import HyperWorksStarter
 
 
 class ScriptBuilder:
     tcl_commands = []
 
     def __init__(self, grid: Grid):
-        self.tcl_commands = HypermeshStarter.initialize_tcl_commands()
+        self.tcl_commands = HyperWorksStarter.initialize_tcl_commands()
         self.grid = grid
 
     def write_tcl_create_nodes(self):
