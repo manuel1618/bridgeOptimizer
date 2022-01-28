@@ -6,14 +6,14 @@ from BridgeOptimizer.datastructure.hypermesh.ModelEntities import Material
 from BridgeOptimizer.datastructure.hypermesh.Rod import Rod
 
 
-from .HypermeshStarter import HypermeshStarter
+from .HyperWorksStarter import HyperWorksStarter
 
 
 class ScriptBuilder:
     tcl_commands = []
 
     def __init__(self, grid: Grid):
-        self.tcl_commands = HypermeshStarter.initialize_tcl_commands()
+        self.tcl_commands = HyperWorksStarter.initialize_tcl_commands()
         self.grid = grid
 
     def write_tcl_create_nodes(self):
@@ -82,14 +82,16 @@ class ScriptBuilder:
                 optimization_id = rod_id
 
             if rod.optimization:
-                id = optimization_id
+                property_id = optimization_id
             else:
-                id = rod_id
-            rod.id = id
+                property_id = rod_id
+
+            rod.property_id = property_id
+            rod.id = rod_id
             self.tcl_commands.append("*setoption topofacecolor=4")
             self.tcl_commands.append("*elementtype 61 1")
             self.tcl_commands.append(
-                f"*rod {rod.node_ids[0]} {rod.node_ids[1]} \"property_{id}\"")
+                f"*rod {rod.node_ids[0]} {rod.node_ids[1]} \"property_{property_id}\"")
             rod_id += 1
 
     def write_tcl_basic_topOpt_minMass(self, node_ids_deflection: List, max_deflection: float):
@@ -99,8 +101,7 @@ class ScriptBuilder:
         optimization_id = 0
         for rod in Rod.instances:
             if rod.optimization:
-                optimization_id = rod.id
-
+                optimization_id = rod.property_id
         self.tcl_commands.append(
             f"*createmark properties 1 property_{optimization_id}")
         self.tcl_commands.append("*topologydesvarcreate 1 \"topOpt\" f0 0 5")
@@ -196,7 +197,7 @@ class ScriptBuilder:
         property_names = ""
         for rod in Rod.instances:
             if rod.optimization:
-                property_names += f"\"property_{rod.id}\" "
+                property_names += f"\"property_{rod.property_id}\" "
 
         self.tcl_commands.append(f"*createmark properties 1 {property_names}")
         self.tcl_commands.append("*topologydesvarcreate 1 \"topOpt\" 0 0 5")

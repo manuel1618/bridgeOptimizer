@@ -24,6 +24,7 @@ class Rod:
     """
     instances = []
     node_ids2Rod: Dict = dict()
+    id2Rod: Dict = dict()
     linksAlreadyDrawn = []
 
     def __init__(self, material: Material, diameter: float, node_ids: Tuple, optimization: bool) -> None:
@@ -34,6 +35,7 @@ class Rod:
         self.node_ids = node_ids
         self.optimization = optimization
         self.id = 0
+        self.property_id = 0
         self.cost_first_segment = 300  # hard_coded for now
         self.cost_per_distance = 100  # hard_coded for now
 
@@ -77,6 +79,16 @@ class Rod:
         Deletes the instance by removing from all instances
         """
         Rod.instances.remove(self)
+
+    @classmethod
+    def get_rod_by_id(self, id: int):
+        if len(Rod.id2Rod.keys()) == 0:
+            for rod in Rod.instances:
+                Rod.id2Rod[rod.id] = rod
+        if id in Rod.id2Rod:
+            return Rod.id2Rod[id]
+        else:
+            return None
 
     @classmethod
     def get_rod_based_on_node_ids(self, node_ids: Tuple):

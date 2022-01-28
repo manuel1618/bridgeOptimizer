@@ -2,10 +2,11 @@ from cmath import exp
 import time
 from typing import List
 import os
+from winreg import HKEY_LOCAL_MACHINE
 import psutil
 
 
-class HypermeshStarter:
+class HyperWorksStarter:
     """
     Hypermesh Starter Class (Windows only currently)
     """
@@ -17,18 +18,24 @@ class HypermeshStarter:
         f"\\Altair\\{ALTAIR_VERSION}"
     ALTAIR_HOME = ALTAIR_HOME.replace("\\", "/")
     PATH_HYPERMESH = ALTAIR_HOME+"\\hwdesktop\\hm\\bin\\win64\\hmopengl.exe"
+    PATH_HYPERVIEW = ALTAIR_HOME+"\\hwdesktop\\hw\\bin\\win64\\hw.exe"
 
     def __init__(self, working_dir: str, model_name_no_ext: str) -> None:
         self.working_dir = working_dir.replace("\\", "/")
         self.model_name = model_name_no_ext
         self.script_path = self.working_dir+"/"+self.model_name+".tcl"
         self.script_path = self.script_path.replace("\\", "/")
+        print(self.script_path)
         self.tcl_commands = []
 
     def initialize_tcl_commands() -> List:
         tcl_commands = []
         tcl_commands.append(
-            f"*templatefileset \"{HypermeshStarter.ALTAIR_HOME}/hwdesktop/templates/feoutput/optistruct/optistruct\"")
+            f"*templatefileset \"{HyperWorksStarter.ALTAIR_HOME}/hwdesktop/templates/feoutput/optistruct/optistruct\"")
+        return tcl_commands
+
+    def initialize_tcl_commands_hyperview() -> List:
+        tcl_commands = []
         return tcl_commands
 
     def runHyperMesh(self, batch=False, wait=False):
@@ -65,6 +72,38 @@ class HypermeshStarter:
 
         print("Finished Altair Run")
 
+    def runHyperview(self, batch=False, wait=False):
+        """
+        based on running hypermesh 
+        """
+        import subprocess
+
+        # Hide Output of the shell - relax!
+        startupinfo = subprocess.STARTUPINFO()
+        startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+        # if (hidden):
+        # startupinfo.wShowWindow = subprocess.SW_HIDE
+
+        # print(script_path)
+        if(batch):
+            process = subprocess.Popen(
+                [self.PATH_HYPERVIEW, "-b", "-tcl", self.script_path], startupinfo=startupinfo)
+
+        else:
+            process = subprocess.Popen(
+                [self.PATH_HYPERVIEW, "-tcl", self.script_path], startupinfo=startupinfo)
+
+        if (wait):
+            print("Waiting for Hyperview Process to Finish")
+            process.wait()
+        # batch needs special attention:
+        if(wait):
+            if checkIfProcessRunning("hw.exe"):
+                print("Waiting for Hyperview (hw.exe) Process to Finish")
+                time.sleep(1)
+
+        print("Finished Hyperview Run")
+
     def add_export_and_run_options(self, fem_path: str, user_param: str):
         """
         Adds the lines for exporting a .fem file and run options
@@ -87,7 +126,7 @@ class HypermeshStarter:
 
     def write_script(self, tcl_commands: List[str], calc_dir: str, run: bool, user_param: str):
         """
-        writes the script and runs it. For the list or user_param, see the hypermeshStarter method
+        writes the script and runs it. For the list or user_param, see the HyperWorksStarter method
 
         """
         self.tcl_commands = [
@@ -99,6 +138,19 @@ class HypermeshStarter:
         if run:
             self.add_export_and_run_options(fem_path, user_param)
 
+        with open(self.script_path, 'w') as tcl_file:
+            for line in self.tcl_commands:
+                tcl_file.write("%s\n" % line)
+
+    def write_script_hyperview(self, calc_dir: str, tcl_commands: List[str]):
+        """
+        placeholder for now
+        """
+        self.tcl_commands = [
+            line for line in tcl_commands]  # copy as we don't want to change the original data
+        calc_dir = calc_dir.replace("\\", "/")  # hypermesh does not like \
+        self.tcl_commands.insert(
+            0, f"cd {calc_dir}")  # change working directory
         with open(self.script_path, 'w') as tcl_file:
             for line in self.tcl_commands:
                 tcl_file.write("%s\n" % line)
