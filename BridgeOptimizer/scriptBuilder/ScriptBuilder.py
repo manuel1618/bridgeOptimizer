@@ -28,6 +28,13 @@ class ScriptBuilder:
                     self.grid.ids[y][x] = id
                     id += 1
 
+    def write_tcl_visualize_rods_as_lines(self, rods: List[Rod]):
+        for rod in rods:
+            self.tcl_commands.append(
+                f"*createlist nodes 1 {rod.node_ids[0]} {rod.node_ids[1]}")
+            self.tcl_commands.append("*linecreatefromnodes 1 0 150 5 179")
+        self.tcl_commands.append("*nodecleartempmark ")
+
     def write_tcl_create_rods(self):
         rod_id: int = 1
         rod: Rod = None
