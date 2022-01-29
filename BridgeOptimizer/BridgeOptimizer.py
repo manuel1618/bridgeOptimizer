@@ -1,13 +1,14 @@
 from importlib.resources import path
-import math
-from typing import List, Tuple
+import os
+from msilib.schema import File
+from typing import Dict, List, Tuple
+from datetime import datetime
 from BridgeOptimizer.datastructure.Bridge import Bridge
 from BridgeOptimizer.datastructure.DrivingLane import DrivingLane
 from BridgeOptimizer.datastructure.hypermesh.ModelEntities import Material
 from BridgeOptimizer.datastructure.hypermesh.Rod import Rod
 from BridgeOptimizer.postprocessing.BridgeVisualizer import BridgeVisualizer
 from BridgeOptimizer.scriptBuilder.HyperWorksStarter import HyperWorksStarter
-
 import BridgeOptimizer.scriptBuilder.ScriptBuilderBoundaryConditions as ScriptBuilderBoundaryConditions
 import BridgeOptimizer.scriptBuilder.ScriptBuilder as ScriptBuilder
 from BridgeOptimizer.scriptBuilder.ScriptBuilderHyperview import ScriptBuilderHyperview
@@ -19,6 +20,7 @@ from BridgeOptimizer.datastructure.hypermesh.Rod import Rod
 from BridgeOptimizer.datastructure.Grid import Grid
 from BridgeOptimizer.datastructure.Bridge import Bridge
 from BridgeOptimizer.postprocessing.GlobalOutputReader import DisplacementReader
+from BridgeOptimizer.utility.DirectoryHelper import DirectoryHelper
 
 
 class BridgeOptimizer:
@@ -27,119 +29,165 @@ class BridgeOptimizer:
 
     """
 
+    def __init__(self, values: Dict = dict()) -> None:
+        print("hello")
+        default_values = self.load_default_values()
 
-def main():
+        for key in default_values.keys():
+            if key not in values:
+                values[key] = default_values[key]
 
-    simulation_dir = "C:\\temp"
-    model_name_optimization = "myBridgeOptimizationMode"
-    density_threshold = 0.2
+        # Independent variables
+        now = datetime.now()
+        model_name_optimization = values["model_name_optimization"]
+        simulation_dir = values["simulation_dir"]+"/" + \
+            model_name_optimization+"_"+str(now.timestamp())
+        if not os.path.exists(simulation_dir):
+            os.makedirs(simulation_dir)
 
-    length = 32
-    height = 8
-    spacing = 1.25
+        density_threshold = values["density_threshold"]
 
-    driving_lane_height = int(height / 2)
-    load_sum = -1500*spacing
-    neighbour_distance_threshold_lower = 0.
-    # this is grid beam resolution, min 1.5 * spacing
-    neighbour_distance_threshold = 1.5*spacing
-    max_beam_length = 8*spacing
-    grid = Grid(length, height, spacing)
+        length = values["length"]
+        height = values["height"]
+        spacing = values["spacing"]
 
-    # blackout zone
-    grid.blackout_zone(0, 0, driving_lane_height-1, length+1)
-    # grid.print_matrix()
+        load_sum = -1500*spacing
+        neighbour_distance_threshold_lower = 0.
+        # this is grid beam resolution, min 1.5 * spacing
+        neighbour_distance_threshold = values["neighbour_distance_threshold"]
+        max_beam_length = values["max_beam_length"]
+        grid = Grid(length, height, spacing)
 
-    # Build script
-    script_builder = ScriptBuilder.ScriptBuilder(grid)
+        # blackout zone
+        grid.blackout_zone(
+            0, 0, values["driving_lane_start_y"], length+1)
+        # grid.print_matrix()
 
-    script_builder.write_tcl_create_nodes()
+        # Build script
+        script_builder = ScriptBuilder.ScriptBuilder(grid)
 
-    # Rods
-    material = Material(200000, 0.3, 7.8e-9)
-    diameter = 0.2*spacing
-    Rod.create_rods(grid, neighbour_distance_threshold_lower,
-                    neighbour_distance_threshold, material, diameter)
-    grid.print_matrix_nodeIds()
-    # Driving Lane
-    driving_lane_nodes = grid.get_path_a_star(grid.ids[driving_lane_height]
-                                              [0], grid.ids[driving_lane_height][length])
-    # delete all Rods belonging to the driving lane
-    Rod.driving_lane_ereaser(driving_lane_nodes)
-    driving_lane = DrivingLane(max_beam_length, driving_lane_nodes, grid)
-    driving_lane.create_Rods_along_nodes_path(material, 0.1*diameter)
-    # Model Entities Creation
-    Rod.create_model_Entities(material)
+        script_builder.write_tcl_create_nodes()
 
-    # Bridge
-    bridge = Bridge(grid, Rod.instances)
-    bridge.calculate_costs()
+        # Rods
+        material = Material(200000, 0.3, 7.8e-9)
+        diameter = 0.2*spacing
+        Rod.create_rods(grid, neighbour_distance_threshold_lower,
+                        neighbour_distance_threshold, material, diameter)
+        # Driving Lane
+        start_x = values["driving_lane_start_x"]
+        start_y = values["driving_lane_start_y"]
+        end_x = values["driving_lane_end_x"]
+        end_y = values["driving_lane_end_y"]
+        driving_lane_nodes = grid.get_path_a_star(
+            grid.ids[start_y][start_x], grid.ids[end_y][end_x])
+        # delete all Rods belonging to the driving lane
+        Rod.driving_lane_ereaser(driving_lane_nodes)
+        driving_lane = DrivingLane(max_beam_length, driving_lane_nodes, grid)
+        driving_lane.create_Rods_along_nodes_path(material, 0.1*diameter)
+        # Model Entities Creation
+        Rod.create_model_Entities(material)
 
-    # write rods to script
-    script_builder.write_tcl_create_rods()
+        # Bridge
+        bridge = Bridge(grid, Rod.instances)
+        bridge.calculate_costs()
 
-    # Boundary Conditions
-    spc_node_ids = [grid.ids[y][x]
-                    for y, x in zip([driving_lane_height, driving_lane_height], [0, length])]
-    spc_loadCollector = LoadCollector()
-    SPC(spc_loadCollector, spc_node_ids, [0, 0, 0, 0, 0, -999999])
+        # write rods to script
+        script_builder.write_tcl_create_rods()
 
-    # Loads
-    load_node_ids = driving_lane.get_load_nodes()
-    print(load_node_ids)
-    load_loadCollector = LoadCollector()
-    Force(load_loadCollector, load_node_ids, 0, load_sum, 0)
-    # Loadstep
-    LoadStep(spc_loadCollector, load_loadCollector)
-    script_builder_bc = ScriptBuilderBoundaryConditions.ScriptBuilderBoundaryConditions()
-    script_builder_bc.write_tcl_commands_loadsteps(script_builder.tcl_commands)
+        # Boundary Conditions
+        spc_node_ids = [grid.ids[y][x]
+                        for y, x in zip([start_y, end_y], [start_x, end_x])]
+        spc_loadCollector = LoadCollector()
+        SPC(spc_loadCollector, spc_node_ids, [0, 0, 0, 0, 0, -999999])
 
-    # Get Constraint by Analyzing
-    script_builder.write_tcl_control_card_displacement_output()
-    hypermesh_starter = HyperWorksStarter(
-        simulation_dir, model_name_optimization+"_disp")
+        # Loads
+        load_node_ids = driving_lane.get_load_nodes()
+        load_loadCollector = LoadCollector()
+        Force(load_loadCollector, load_node_ids, 0, load_sum, 0)
+        # Loadstep
+        LoadStep(spc_loadCollector, load_loadCollector)
+        script_builder_bc = ScriptBuilderBoundaryConditions.ScriptBuilderBoundaryConditions()
+        script_builder_bc.write_tcl_commands_loadsteps(
+            script_builder.tcl_commands)
 
-    hypermesh_starter.write_script(tcl_commands=script_builder.tcl_commands,
-                                   calc_dir=simulation_dir, run=True,
-                                   user_param="-optskip -len 10000 -nproc 8")
-    hypermesh_starter.runHyperMesh(batch=True, wait=True)
-    path_to_disp_file = simulation_dir+"/"+hypermesh_starter.model_name+".disp"
-    path_to_disp_file.replace("\\", "/")
-    diplacement_reader = DisplacementReader(path_to_disp_file)
-    max_disp = diplacement_reader.get_max_displacement()[1]
-    print(f"Max diplacements: {max_disp}")
+        # Get Constraint by Analyzing
+        script_builder.write_tcl_control_card_displacement_output()
+        hypermesh_starter = HyperWorksStarter(
+            simulation_dir, model_name_optimization+"_disp")
 
-    # TopOpt
-    max_disp_constraint = 5*max_disp
-    script_builder.write_tcl_basic_topOpt_minMass(
-        load_node_ids, max_disp_constraint)
-    hypermesh_starter_topOpt = HyperWorksStarter(
-        simulation_dir, model_name_optimization)
-    hypermesh_starter_topOpt.write_script(tcl_commands=script_builder.tcl_commands,
-                                          calc_dir=simulation_dir, run=True,
-                                          user_param="-len 10000 -nproc 8")
-    hypermesh_starter_topOpt.runHyperMesh(batch=True, wait=True)
+        hypermesh_starter.write_script(tcl_commands=script_builder.tcl_commands,
+                                       calc_dir=simulation_dir, run=True,
+                                       user_param="-optskip -len 10000 -nproc 8")
+        hypermesh_starter.runHyperMesh(batch=True, wait=True)
+        path_to_disp_file = simulation_dir+"/"+hypermesh_starter.model_name+".disp"
+        path_to_disp_file.replace("\\", "/")
+        diplacement_reader = DisplacementReader(path_to_disp_file)
+        max_disp = diplacement_reader.get_max_displacement()[1]
+        print(f"Max diplacements: {max_disp}")
 
-    # Density File
-    path_to_des_file = simulation_dir+"/"+model_name_optimization+"_des.h3d"
-    path_to_density_file = simulation_dir+"/" + \
-        model_name_optimization+"_densityFile.txt"
-    # Remove Rods which did not make it
-    bridge.remove_rods_with_low_density(
-        simulation_dir, path_to_des_file, path_to_density_file, density_threshold)
+        # TopOpt
+        max_disp_constraint = 5*max_disp
+        script_builder.write_tcl_basic_topOpt_minMass(
+            load_node_ids, max_disp_constraint)
+        hypermesh_starter_topOpt = HyperWorksStarter(
+            simulation_dir, model_name_optimization)
+        hypermesh_starter_topOpt.write_script(tcl_commands=script_builder.tcl_commands,
+                                              calc_dir=simulation_dir, run=True,
+                                              user_param="-len 10000 -nproc 8")
+        hypermesh_starter_topOpt.runHyperMesh(batch=True, wait=True)
 
-    # Screenshots
-    script_builder_hyperview = ScriptBuilderHyperview()
-    script_builder_hyperview.screenshot_element_density(
-        path_to_des_file, density_threshold)
-    hypermesh_starter.write_script_hyperview(
-        simulation_dir, script_builder_hyperview.tcl_commands)
-    hypermesh_starter.runHyperview(True, True)
+        # Density File
+        path_to_des_file = simulation_dir+"/"+model_name_optimization+"_des.h3d"
+        path_to_density_file = simulation_dir+"/" + \
+            model_name_optimization+"_densityFile.txt"
+        # Remove Rods which did not make it
+        bridge.remove_rods_with_low_density(
+            simulation_dir, path_to_des_file, path_to_density_file, density_threshold)
 
-    bridge.combine_rods_where_possible(grid)
-    # Visualize
-    BridgeVisualizer.visualize_bridge(simulation_dir, grid, bridge.rods)
+        # Screenshots
+        script_builder_hyperview = ScriptBuilderHyperview()
+        script_builder_hyperview.screenshot_element_density(
+            path_to_des_file, density_threshold)
+        hypermesh_starter.write_script_hyperview(
+            simulation_dir, script_builder_hyperview.tcl_commands)
+        hypermesh_starter.runHyperview(True, True)
+
+        bridge.combine_rods_where_possible(grid)
+        # Visualize
+        #BridgeVisualizer.visualize_bridge(simulation_dir, grid, bridge.rods)
+
+    def load_default_values(self) -> Dict:
+        default_vaules = dict()
+        default_vaules["simulation_dir"] = "C:\\temp"
+        default_vaules["model_name_optimization"] = "model_name_optimization"
+        default_vaules["density_threshold"] = 0.2
+        default_vaules["length"] = 32
+        default_vaules["height"] = 8
+        default_vaules["spacing"] = 1.25
+        default_vaules["neighbour_distance_threshold"] = 1.5 * \
+            default_vaules["spacing"]
+        default_vaules["max_beam_length"] = 8*default_vaules["spacing"]
+        default_vaules["driving_lane_height"] = int(
+            default_vaules["height"]/2.)
+        default_vaules["driving_lane_start_x"] = 0
+        default_vaules["driving_lane_end_x"] = default_vaules["length"]
+        default_vaules["driving_lane_start_y"] = int(
+            default_vaules["height"]/2.)
+        default_vaules["driving_lane_end_y"] = int(
+            default_vaules["height"]/2.)
+        return default_vaules
 
 
 if __name__ == "__main__":
-    main()
+    # spacing test
+    values = dict()
+    values["simulation_dir"] = "C:\\temp\Study_test"
+    if not os.path.exists(values["simulation_dir"]):
+        os.makedirs(values["simulation_dir"])
+    DirectoryHelper.clean_directory(
+        values["simulation_dir"])  # CLEAN DIRECTORY
+    values["spacing"] = 1.25
+    values["neighbour_distance_threshold"] = 1.5 * values["spacing"]
+    BridgeOptimizer(values)
+    values["neighbour_distance_threshold"] = 3 * values["spacing"]
+    BridgeOptimizer(values)
