@@ -43,8 +43,11 @@ class Grid:
         for i in range(len(self.ids)-1, -1, -1):
             print(self.ids[i])
 
-    def get_coordinates(self, index_x: int, index_y: int) -> Tuple:
+    def get_coordinates(self, index_y: int, index_x: int) -> Tuple:
         return (index_x*self.spacing, index_y*self.spacing)
+
+    def get_coordinagtes_by_id(self, id: int) -> Tuple:
+        return (self.get_coordinates(self.get_index_of_id(id)[0], self.get_index_of_id(id)[1]))
 
     def get_index_of_id(self, id: int) -> Tuple:
         """
