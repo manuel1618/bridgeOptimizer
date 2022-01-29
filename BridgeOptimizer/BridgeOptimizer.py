@@ -5,6 +5,7 @@ from BridgeOptimizer.datastructure.Bridge import Bridge
 from BridgeOptimizer.datastructure.DrivingLane import DrivingLane
 from BridgeOptimizer.datastructure.hypermesh.ModelEntities import Material
 from BridgeOptimizer.datastructure.hypermesh.Rod import Rod
+from BridgeOptimizer.postprocessing.BridgeVisualizer import BridgeVisualizer
 from BridgeOptimizer.scriptBuilder.HyperWorksStarter import HyperWorksStarter
 
 import BridgeOptimizer.scriptBuilder.ScriptBuilderBoundaryConditions as ScriptBuilderBoundaryConditions
@@ -134,6 +135,9 @@ def main():
     hypermesh_starter.write_script_hyperview(
         simulation_dir, script_builder_hyperview.tcl_commands)
     hypermesh_starter.runHyperview(True, True)
+
+    # Visualize
+    BridgeVisualizer.visualize_bridge(simulation_dir, grid, bridge.rods)
 
 
 if __name__ == "__main__":
