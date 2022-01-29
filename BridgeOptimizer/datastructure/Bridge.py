@@ -1,8 +1,8 @@
+from typing import List
 from BridgeOptimizer.scriptBuilder.HyperWorksStarter import HyperWorksStarter
 from BridgeOptimizer.scriptBuilder.ScriptBuilderHyperview import ScriptBuilderHyperview
-from .Grid import Grid
-from typing import List
-from .hypermesh.Rod import Rod
+from BridgeOptimizer.datastructure.Grid import Grid
+from BridgeOptimizer.datastructure.hypermesh.Rod import Rod
 
 
 class Bridge:
@@ -58,6 +58,79 @@ class Bridge:
                 self.rods.remove(rod_to_remove)
         print(
             f"Number of Rods after removal: {len(self.rods)}, density threshold value used: {density_threshold}")
+
+    def combine_rods_where_possible(self, grid: Grid):
+        """
+        Rods pointing in the same direction with no additional rods in between are combined
+        """
+
+        length_before = len(self.rods)
+        print(f"Rods before Combining: {length_before}")
+
+        node_ids = set()
+        for rod in self.rods:
+            node_ids.add(rod.node_ids[0])
+            node_ids.add(rod.node_ids[1])
+
+        nodeId_to_rods = dict()
+        for node in node_ids:
+            rods = []
+            for rod in self.rods:
+                if node in rod.node_ids:
+                    rods.append(rod)
+            nodeId_to_rods[node] = rods
+
+        rods_to_combine = []
+        for node in nodeId_to_rods.keys():
+            if len(nodeId_to_rods[node]) == 2:
+                if Rod.have_same_direction(nodeId_to_rods[node][0], nodeId_to_rods[node][1], grid):
+                    rods_to_add = nodeId_to_rods[node]
+                    added = False
+                    for rod_pair in rods_to_combine:
+                        add = False
+                        # if they share a common rod
+                        if not set(rod_pair).isdisjoint(rods_to_add):
+                            # find a rod that is not common and test the direction
+                            rod_to_add = rods_to_add[0]
+                            for rod in rod_pair:
+                                if rod != rod_to_add:
+                                    if Rod.have_same_direction(rod, rod_to_add, grid):
+                                        add = True
+                            if add:  # extend the rodpair by the new rods
+                                rod_pair_new = [x for x in rod_pair]
+                                rod_pair_new.append(rods_to_add[0])
+                                rod_pair_new.append(rods_to_add[1])
+                                rods_to_combine.remove(rod_pair)
+                                rods_to_combine.append(set(rod_pair_new))
+                                added = True
+                    if not added:
+                        rods_to_combine.append(set(rods_to_add))
+
+        # Finally combining the rods
+        for rods in rods_to_combine:
+            all_node_ids = []
+            rods = [rod for rod in rods]
+            for rod in rods:
+                for node_id in rod.node_ids:
+                    if node_id in all_node_ids:
+                        all_node_ids.remove(node_id)
+                    else:
+                        all_node_ids.append(node_id)
+            rod_adapt: Rod = rods[0]
+            rods.remove(rod_adapt)
+            if len(all_node_ids) == 2:
+                rod_adapt.node_ids = all_node_ids
+                for rod_to_remove in set(rods):
+                    if rod_to_remove in self.rods:
+                        self.rods.remove(rod_to_remove)
+            else:
+                print("Error: Not two independent nodes found")
+
+        length_after = len(self.rods)
+        print(f"Rods after Combining: {length_before}")
+        # Recursive Iteration until nothing changes
+        if length_after != length_before:
+            self.combine_rods_where_possible(grid)
 
 
 if __name__ == "__main__":

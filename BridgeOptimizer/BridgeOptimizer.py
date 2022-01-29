@@ -136,6 +136,7 @@ def main():
         simulation_dir, script_builder_hyperview.tcl_commands)
     hypermesh_starter.runHyperview(True, True)
 
+    bridge.combine_rods_where_possible(grid)
     # Visualize
     BridgeVisualizer.visualize_bridge(simulation_dir, grid, bridge.rods)
 

@@ -1,6 +1,7 @@
 from typing import List, Tuple, Dict
 from BridgeOptimizer.datastructure.hypermesh.ModelEntities import Component, Material, Property
 from BridgeOptimizer.datastructure.Grid import Grid
+from BridgeOptimizer.utility.VectorUtililty import VectorUtility
 
 
 class Rod:
@@ -112,6 +113,19 @@ class Rod:
         else:
             print(f"No Rod found for node pair: {node_ids}")
             return None
+
+    @classmethod
+    def have_same_direction(self, rod1, rod2, grid: Grid) -> bool:
+        rod1_node1_coordinates = grid.get_coordinagtes_by_id(rod1.node_ids[0])
+        rod1_node2_coordinates = grid.get_coordinagtes_by_id(rod1.node_ids[1])
+        vector1 = [b-a for a,
+                   b in zip(rod1_node1_coordinates, rod1_node2_coordinates)]
+        rod2_node1_coordinates = grid.get_coordinagtes_by_id(rod2.node_ids[0])
+        rod2_node2_coordinates = grid.get_coordinagtes_by_id(rod2.node_ids[1])
+        vector2 = [b-a for a,
+                   b in zip(rod2_node1_coordinates, rod2_node2_coordinates)]
+
+        return (VectorUtility.are_linear_dependent(vector1, vector2))
 
     @DeprecationWarning
     @classmethod
