@@ -63,7 +63,7 @@ class DrivingLane:
 
                 if distance_remaining <= 2*max_beam_length:
                     if distance_remaining < max_beam_length:
-                        print(f"Final {start_left} {start_right}")
+                        # print(f"Final {start_left} {start_right}")
                         left_side.append(start_left)
                         right_side.appendleft(start_right)
                         all_nodes.clear()
@@ -93,10 +93,10 @@ class DrivingLane:
                     else:
                         next_right = next_right_temp  # next_left : last node not exceeding max beam length
 
-                print(f"Left: {start_left} {next_left}")
+                # print(f"Left: {start_left} {next_left}")
                 left_side.append(start_left)
                 left_side.append(next_left)
-                print(f"Right: {start_right} {next_right}")
+                # print(f"Right: {start_right} {next_right}")
                 right_side.appendleft(start_right)
                 right_side.appendleft(next_right)
 
@@ -108,13 +108,13 @@ class DrivingLane:
 
         # one element case
         if len(all_nodes) == 0:
-            print(f"Final {start_left} {start_right}")
+            # print(f"Final {start_left} {start_right}")
             left_side.append(start_left)
             right_side.appendleft(start_right)
         # symmetric case - one node left (the middle hopefully)
         elif len(all_nodes) % 2 != 0:  # non even number left
             if self.calculate_distance(start_left, start_right) < max_beam_length:
-                print(f"Final {start_left} {start_right}")
+                # print(f"Final {start_left} {start_right}")
                 left_side.append(start_left)
                 right_side.appendleft(start_right)
             else:
@@ -124,8 +124,8 @@ class DrivingLane:
                     middle = all_nodes.popleft()
                 middle = all_nodes.pop()
 
-                print(f"Final {start_left} {middle}")
-                print(f"Final {middle} {start_right}")
+                # print(f"Final {start_left} {middle}")
+                # print(f"Final {middle} {start_right}")
                 left_side.append(start_left)
                 left_side.append(middle)
                 left_side.append(middle)
@@ -146,7 +146,7 @@ class DrivingLane:
 
             if self.calculate_distance(middle_left, start_right) < max_beam_length:
                 # Finish 2 elements
-                print(f"Final {start_left} {middle_left} {start_right}")
+                # print(f"Final {start_left} {middle_left} {start_right}")
                 left_side.append(start_left)
                 left_side.append(middle_left)
                 left_side.append(middle_left)
@@ -163,8 +163,7 @@ class DrivingLane:
                     else:
                         middle_right = next_right_temp
 
-                print(
-                    f"Final: {start_left} {middle_left} {middle_right} {start_right}")
+                #print(f"Final: {start_left} {middle_left} {middle_right} {start_right}")
                 left_side.append(start_left)
                 left_side.append(middle_left)
                 left_side.append(middle_left)

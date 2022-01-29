@@ -1,5 +1,4 @@
 import math
-from matplotlib import lines
 from typing import List
 
 
