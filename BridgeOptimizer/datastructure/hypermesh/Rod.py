@@ -26,7 +26,6 @@ class Rod:
     instances = []
     node_ids2Rod: Dict = dict()
     id2Rod: Dict = dict()
-    linksAlreadyDrawn = []
 
     def __init__(self, material: Material, diameter: float, node_ids: Tuple, optimization: bool) -> None:
         Rod.instances.append(self)
@@ -45,6 +44,7 @@ class Rod:
         """
         Creats a default Grid for every active node tuple within a threshold. Optimization is default set to be true
         """
+        linksAlreadyDrawn = []
         for x in range(len(grid.matrix[0])):
             for y in range(len(grid.matrix)):
                 if grid.matrix[y][x] == 1:
@@ -52,10 +52,10 @@ class Rod:
                     neighbours = grid.get_neighbour_by_distance(
                         x, y, neighbour_distance_lower_thresold, neighbour_distance_threshold)
                     for neighbourId in neighbours:
-                        if (id, neighbourId) not in self.linksAlreadyDrawn and (neighbourId, id) not in self.linksAlreadyDrawn:
+                        if (id, neighbourId) not in linksAlreadyDrawn and (neighbourId, id) not in linksAlreadyDrawn:
 
                             Rod(material, diameter, (id, neighbourId), True)
-                            self.linksAlreadyDrawn.append((id, neighbourId))
+                            linksAlreadyDrawn.append((id, neighbourId))
 
     @classmethod
     def driving_lane_ereaser(self, node_path: List[int]):
@@ -179,7 +179,8 @@ class Rod:
         For right now - only optimization / non optimization , single material
         TODO: depending on material, diameter etc
         """
-
+        Property.instances = []
+        Component.instances = []
         for rod in Rod.instances:
             property = Property(material, rod.diameter, rod.optimization)
             Component(property)

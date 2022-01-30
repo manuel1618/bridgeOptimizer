@@ -30,12 +30,13 @@ class BridgeOptimizer:
     """
 
     def __init__(self, values: Dict = dict()) -> None:
-        print("hello")
+        print("------------------- New Study -----------------------")
         default_values = self.load_default_values()
 
         for key in default_values.keys():
             if key not in values:
                 values[key] = default_values[key]
+        values["driving_lane_end_x"] = values["length"]
 
         # Independent variables
         now = datetime.now()
@@ -71,6 +72,7 @@ class BridgeOptimizer:
         # Rods
         material = Material(200000, 0.3, 7.8e-9)
         diameter = 0.2*spacing
+        Rod.instances = []
         Rod.create_rods(grid, neighbour_distance_threshold_lower,
                         neighbour_distance_threshold, material, diameter)
         # Driving Lane
@@ -94,6 +96,9 @@ class BridgeOptimizer:
         # write rods to script
         script_builder.write_tcl_create_rods()
 
+        # Empty Lists of Boundary Conditions
+        LoadCollector.instances = []
+        LoadStep.instances = []
         # Boundary Conditions
         spc_node_ids = [grid.ids[y][x]
                         for y, x in zip([start_y, end_y], [start_x, end_x])]
@@ -189,5 +194,6 @@ if __name__ == "__main__":
     values["spacing"] = 1.25
     values["neighbour_distance_threshold"] = 1.5 * values["spacing"]
     BridgeOptimizer(values)
-    values["neighbour_distance_threshold"] = 3 * values["spacing"]
+    values["length"] = 11
+    values["neighbour_distance_threshold"] = 2.5 * values["spacing"]
     BridgeOptimizer(values)

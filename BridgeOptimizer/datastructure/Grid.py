@@ -66,7 +66,8 @@ class Grid:
         for i in range(len(self.ids)):
             if id in self.ids[i]:
                 if index != (-1, -1):
-                    print("Error: Duplicate Id in ids matrix.")
+                    if(id != 0):
+                        print("Error: Duplicate Id in ids matrix.")
                 index = (i, self.ids[i].index(id))
         if index == (-1, -1):
             print(f"Error: Id {id} not found")
