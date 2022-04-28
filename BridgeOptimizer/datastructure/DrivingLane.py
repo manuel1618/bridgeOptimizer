@@ -47,7 +47,7 @@ class DrivingLane:
             distance = self.calculate_distance(all_nodes[i], all_nodes[i+1])
             if distance > max_beam_length:
                 print(
-                    "Error driving lane: on segment is less than the max beam length. Impossible")
+                    "Error driving lane: one segment is less than the max beam length. Impossible")
 
         distance = self.calculate_distance(all_nodes[0], all_nodes[-1])
 
@@ -109,8 +109,10 @@ class DrivingLane:
         # one element case
         if len(all_nodes) == 0:
             # print(f"Final {start_left} {start_right}")
-            left_side.append(start_left)
-            right_side.appendleft(start_right)
+            if left_side[-1] != start_left:
+                left_side.append(start_left)
+            if right_side[0] != start_right:
+                right_side.appendleft(start_right)
         # symmetric case - one node left (the middle hopefully)
         elif len(all_nodes) % 2 != 0:  # non even number left
             if self.calculate_distance(start_left, start_right) < max_beam_length:
@@ -182,7 +184,7 @@ class DrivingLane:
 
     def get_load_nodes(self):
         """
-        Returns the load nodes without duplicates and without the first and last one, as they are 
+        Returns the load nodes without duplicates and without the first and last one, as they are
         single point constraints most likely
         """
         load_nodes = [node for node in DrivingLane.nodes]
@@ -194,21 +196,27 @@ class DrivingLane:
 
 
 if __name__ == "__main__":
+    grid = Grid(200, 1, 1)
+    ids = [[i for i in range(200)]]
+    grid.ids = ids
     print("0-10, length 3")
-    DrivingLane(3, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+    DrivingLane(3, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10], grid)
     print(DrivingLane.nodes)
     print("0-9, length 3")
-    DrivingLane(3, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
+    DrivingLane(3, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], grid)
     print(DrivingLane.nodes)
     print("0-9, length 20")
-    DrivingLane(20, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
+    DrivingLane(20, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], grid)
     print(DrivingLane.nodes)
     print("0-9, length 10")
-    DrivingLane(10, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
+    DrivingLane(10, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], grid)
     print(DrivingLane.nodes)
     print("0-10, length 1")
-    DrivingLane(1, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+    DrivingLane(1, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10], grid)
     print(DrivingLane.nodes)
     print("0-9, length 1")
-    DrivingLane(1, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
+    DrivingLane(1, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], grid)
+    print(DrivingLane.nodes)
+    print("0-12, length 4")
+    DrivingLane(4, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], grid)
     print(DrivingLane.nodes)

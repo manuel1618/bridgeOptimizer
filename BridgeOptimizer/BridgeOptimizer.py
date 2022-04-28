@@ -53,7 +53,7 @@ class BridgeOptimizer:
         spacing = values["spacing"]
 
         load_sum = -1500*spacing
-        neighbour_distance_threshold_lower = 0.
+        neighbour_distance_threshold_lower = values["min_beam_length"]
         # this is grid beam resolution, min 1.5 * spacing
         neighbour_distance_threshold = values["neighbour_distance_threshold"]
         max_beam_length = values["max_beam_length"]
@@ -75,6 +75,7 @@ class BridgeOptimizer:
         Rod.instances = []
         Rod.create_rods(grid, neighbour_distance_threshold_lower,
                         neighbour_distance_threshold, material, diameter)
+
         # Driving Lane
         start_x = values["driving_lane_start_x"]
         start_y = values["driving_lane_start_y"]
@@ -86,6 +87,7 @@ class BridgeOptimizer:
         Rod.driving_lane_ereaser(driving_lane_nodes)
         driving_lane = DrivingLane(max_beam_length, driving_lane_nodes, grid)
         driving_lane.create_Rods_along_nodes_path(material, 0.1*diameter)
+
         # Model Entities Creation
         Rod.create_model_Entities(material)
 
@@ -159,19 +161,23 @@ class BridgeOptimizer:
 
         bridge.combine_rods_where_possible(grid)
         # Visualize
-        #BridgeVisualizer.visualize_bridge(simulation_dir, grid, bridge.rods)
+        # BridgeVisualizer.visualize_bridge(simulation_dir, grid, bridge.rods)
 
     def load_default_values(self) -> Dict:
         default_vaules = dict()
+        # independent
         default_vaules["simulation_dir"] = "C:\\temp"
         default_vaules["model_name_optimization"] = "model_name_optimization"
         default_vaules["density_threshold"] = 0.2
         default_vaules["length"] = 32
         default_vaules["height"] = 8
         default_vaules["spacing"] = 1.25
+        default_vaules["min_beam_length"] = 0
+        default_vaules["max_beam_length"] = 8*default_vaules["spacing"]
         default_vaules["neighbour_distance_threshold"] = 1.5 * \
             default_vaules["spacing"]
-        default_vaules["max_beam_length"] = 8*default_vaules["spacing"]
+
+        # defaults ( or dependent)
         default_vaules["driving_lane_height"] = int(
             default_vaules["height"]/2.)
         default_vaules["driving_lane_start_x"] = 0
@@ -191,9 +197,14 @@ if __name__ == "__main__":
         os.makedirs(values["simulation_dir"])
     DirectoryHelper.clean_directory(
         values["simulation_dir"])  # CLEAN DIRECTORY
+
     values["spacing"] = 1.25
-    values["neighbour_distance_threshold"] = 1.5 * values["spacing"]
-    BridgeOptimizer(values)
-    values["length"] = 11
-    values["neighbour_distance_threshold"] = 2.5 * values["spacing"]
+    values["neighbour_distance_threshold"] = 4.1 * values["spacing"]
+    values["model_name_optimization"] = "level2"
+    values["density_threshold"] = 0.5
+    values["length"] = 12
+    values["height"] = 8
+    values["min_beam_length"] = 1 * values["spacing"]
+    values["max_beam_length"] = 4.25 * values["spacing"]
+
     BridgeOptimizer(values)
