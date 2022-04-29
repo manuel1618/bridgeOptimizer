@@ -235,3 +235,26 @@ class ScriptBuilder:
         self.tcl_commands.append(
             f"*opticonstraintcreate \"vf_dconstraint\" 2 1 -1e+20 {max_volumr_frac} 1 0")
         self.tcl_commands.append(f"*optiobjectivecreate 1 0 1")
+
+    def write_tcl_opticontrolParameter(self, maxIterations: int, discrete: int):
+        self.tcl_commands.append(
+            "*opticontrolcreate80sr1 0 "+str(maxIterations)+" 0 0 0 0.6 0 0.01 1 "+str(discrete)+" 0 0 0 0 0 0.005 0 0.5 0 0.2 0 0.5 0 1 0 10 0 0 0 0 0 0 0 0 1 0 1 0")
+        self.tcl_commands.append(
+            "*opticontrolupdateeslparameters 0 30 0 1 0 0.3")
+        self.tcl_commands.append(
+            "*opticontrolupdateoptimizationparameters 0 2 0 \"MFD\" 0 20 0 20 0 1")
+        self.tcl_commands.append("*opticontrolupdateremeshparameters 0 0")
+        self.tcl_commands.append(
+            "*opticontrolupdateapproxparameters 0 \"FULL\"")
+        self.tcl_commands.append(
+            "*opticontrolupdatebarconparameters 0 \"REQUIRED\"")
+        self.tcl_commands.append("*opticontrolupdatecontolparameters 0 1")
+        self.tcl_commands.append(
+            "*opticontrolupdatetopdiscparameters 0 \"NO\"")
+        self.tcl_commands.append(
+            "*opticontrolupdatetopdvparameters 0 \"ALTER\"")
+        self.tcl_commands.append(
+            "*opticontrolupdatetoprstparameters 0 \"STRICT\"")
+        self.tcl_commands.append("*opticontrolupdatemanthrparameters 0 1")
+        self.tcl_commands.append(
+            "*setvalue opticontrols id=1 STATUS=2 12333=0 12334=NO")

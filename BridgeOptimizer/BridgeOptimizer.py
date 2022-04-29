@@ -36,6 +36,7 @@ class BridgeOptimizer:
         for key in default_values.keys():
             if key not in values:
                 values[key] = default_values[key]
+                print("Fetched Default value for key: "+key)
         values["driving_lane_end_x"] = values["length"]
 
         # Independent variables
@@ -60,8 +61,9 @@ class BridgeOptimizer:
         grid = Grid(length, height, spacing)
 
         # blackout zone
-        grid.blackout_zone(
-            0, 0, values["driving_lane_start_y"], length+1)
+        if values["blackout_lower_zone"] == True:
+            print("Bottom half is ignored")
+            grid.blackout_zone(0, 0, values["driving_lane_start_y"], length+1)
         # grid.print_matrix()
 
         # Build script
@@ -133,9 +135,11 @@ class BridgeOptimizer:
         print(f"Max diplacements: {max_disp}")
 
         # TopOpt
-        max_disp_constraint = 5*max_disp
+        max_disp_constraint = values["max_disp_constraint_factor"]*max_disp
         script_builder.write_tcl_basic_topOpt_minMass(
             load_node_ids, max_disp_constraint)
+        script_builder.write_tcl_opticontrolParameter(
+            99, values["opticontrol_discrete"])
         hypermesh_starter_topOpt = HyperWorksStarter(
             simulation_dir, model_name_optimization)
         hypermesh_starter_topOpt.write_script(tcl_commands=script_builder.tcl_commands,
@@ -163,6 +167,9 @@ class BridgeOptimizer:
         # Visualize
         # BridgeVisualizer.visualize_bridge(simulation_dir, grid, bridge.rods)
 
+        # Cleanup
+        hypermesh_starter.clean_up_simulation_dir(simulation_dir)
+
     def load_default_values(self) -> Dict:
         default_vaules = dict()
         # independent
@@ -176,6 +183,8 @@ class BridgeOptimizer:
         default_vaules["max_beam_length"] = 8*default_vaules["spacing"]
         default_vaules["neighbour_distance_threshold"] = 1.5 * \
             default_vaules["spacing"]
+        default_vaules["max_disp_constraint_factor"] = 5
+        default_vaules["opticontrol_discrete"] = 3
 
         # defaults ( or dependent)
         default_vaules["driving_lane_height"] = int(
@@ -186,6 +195,7 @@ class BridgeOptimizer:
             default_vaules["height"]/2.)
         default_vaules["driving_lane_end_y"] = int(
             default_vaules["height"]/2.)
+        default_vaules["blackout_lower_zone"] = False
         return default_vaules
 
 
@@ -198,13 +208,16 @@ if __name__ == "__main__":
     DirectoryHelper.clean_directory(
         values["simulation_dir"])  # CLEAN DIRECTORY
 
-    values["spacing"] = 1.25
-    values["neighbour_distance_threshold"] = 4.1 * values["spacing"]
-    values["model_name_optimization"] = "level2"
-    values["density_threshold"] = 0.5
-    values["length"] = 12
+    values["spacing"] = 1.
+    values["neighbour_distance_threshold"] = 1.5 * values["spacing"]
+    values["model_name_optimization"] = "level1"
+    values["density_threshold"] = 0.3
+    values["length"] = 8
     values["height"] = 8
-    values["min_beam_length"] = 1 * values["spacing"]
-    values["max_beam_length"] = 4.25 * values["spacing"]
+    values["min_beam_length"] = 0.9 * values["spacing"]
+    values["max_beam_length"] = 4.5 * values["spacing"]
+    values["max_disp_constraint_factor"] = 15
+    values["blackout_lower_zone"] = True
+    values["opticontrol_discrete"] = 3
 
     BridgeOptimizer(values)

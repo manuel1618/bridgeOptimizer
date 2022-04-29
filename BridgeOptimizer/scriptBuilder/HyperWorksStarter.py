@@ -2,6 +2,7 @@ from cmath import exp
 import time
 from typing import List
 import os
+import glob
 from winreg import HKEY_LOCAL_MACHINE
 import psutil
 
@@ -154,6 +155,15 @@ class HyperWorksStarter:
         with open(self.script_path, 'w') as tcl_file:
             for line in self.tcl_commands:
                 tcl_file.write("%s\n" % line)
+
+    def clean_up_simulation_dir(self, simulation_dir: str) -> None:
+        """
+        Removes Files left from the solver which aren't necessary to the user
+        """
+        filelist = glob.glob(os.path.join(simulation_dir, "*~"))
+        for f in filelist:
+            print("Deleted File: "+f+", (cleanup Sim Dir)")
+            os.remove(f)
 
 
 def checkIfProcessRunning(processName):
